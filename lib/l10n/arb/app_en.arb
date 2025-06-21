@@ -1,0 +1,16 @@
+{
+  "@@locale": "en",
+  "login_createPin": "Create PIN",
+  "login_enterPin": "Enter PIN",
+  "login_confirmPin": "Confirm PIN",
+  "login_savePin": "Save PIN",
+  "login_pinMismatch": "PINs do not match",
+  "login_invalidPin": "Invalid PIN",
+  "login_unlock": "Unlock",
+  "login_validation": "PIN must be at least 4 digits",
+
+  "title": "Where’s My Rent?",
+  "home_welcome": "Welcome to Where’s My Rent!",
+  "home_Logout": "Logout",
+  "home_AddProperty": "Agregar propiedad"
+}

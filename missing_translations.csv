@@ -1,0 +1,15 @@
+{
+  "es": [
+    "login_createPin",
+    "login_enterPin",
+    "login_confirmPin",
+    "login_savePin",
+    "login_pinMismatch",
+    "login_invalidPin",
+    "login_unlock",
+    "login_validation",
+    "title",
+    "home_Logout",
+    "home_AddProperty"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "@@locale": "es",
+  "createPin": "Crear PIN",
+  "enterPin": "Ingresar PIN",
+  "confirmPin": "Confirmar PIN",
+  "savePin": "Guardar PIN",
+  "pinMismatch": "Los PIN no coinciden",
+  "invalidPin": "PIN inválido",
+  "home_welcome": "¡Bienvenido a Where’s My Rent!"
+}

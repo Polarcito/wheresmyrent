@@ -1,0 +1,8 @@
+strict-arb-format: false
+synthetic-package: false
+suppress-missing-metadata-errors: true
+arb-dir: lib/l10n/arb
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-dir: lib/gen_l10n
+untranslated-messages-file: missing_translations.csv
