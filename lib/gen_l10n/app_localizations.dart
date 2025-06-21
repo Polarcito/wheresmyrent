@@ -166,6 +166,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Agregar propiedad'**
   String get home_AddProperty;
+
+  /// No description provided for @home_noProperties.
+  ///
+  /// In en, this message translates to:
+  /// **'No properties added yet.'**
+  String get home_noProperties;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

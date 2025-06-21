@@ -1,19 +1,44 @@
+import 'package:hive/hive.dart';
 import 'payment.dart';
 
-class Property {
+part 'property.g.dart';
+
+@HiveType(typeId: 0)
+class Property extends HiveObject {
+  @HiveField(0)
   final String id;
+
+  @HiveField(1)
   final String name;
+
+  @HiveField(2)
   final String address;
+
+  @HiveField(3)
   final String tenantName;
+
+  @HiveField(4)
   final double monthlyRent;
-  final int dueDay; // día del mes en que vence el pago
+
+  @HiveField(5)
+  final int dueDay;
+
+  @HiveField(6)
   final DateTime startDate;
+
+  @HiveField(7)
   final DateTime? endDate;
+
+  @HiveField(8)
   final bool isActive;
 
+  @HiveField(9)
   final String? contractFilePath;
-  final List<String> initialPhotos; // paths locales de imágenes
 
+  @HiveField(10)
+  final List<String> initialPhotos;
+
+  @HiveField(11)
   final List<Payment> payments;
 
   Property({
@@ -27,9 +52,11 @@ class Property {
     this.endDate,
     this.isActive = true,
     this.contractFilePath,
-    this.initialPhotos = const [],
-    this.payments = const [],
-  });
+    List<String>? initialPhotos,
+    List<Payment>? payments,
+  })  : initialPhotos = initialPhotos ?? [],
+        payments = payments ?? [];
+
 
   bool get hasPendingPayment {
     final now = DateTime.now();

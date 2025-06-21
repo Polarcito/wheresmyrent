@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:wheresmyrent/model/generic/app_colors.dart';
+import 'package:wheresmyrent/model/generic/config.dart';
 import 'package:wheresmyrent/model/property.dart';
 import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class AddPropertyScreen extends StatefulWidget {
   const AddPropertyScreen({Key? key}) : super(key: key);
@@ -22,7 +25,7 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
   int _selectedDueDay = 1;
   DateTime? _startDate;
 
-  void _submit() {
+  void _submit() async {
     if (_formKey.currentState!.validate() && _startDate != null) {
       final newProperty = Property(
         id: _uuid.v4(),
@@ -34,8 +37,12 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
         startDate: _startDate!,
       );
 
-      // Aquí podrías guardar la propiedad localmente o pasarla de vuelta
-      Navigator.pop(context, newProperty);
+      final box = Hive.box<Property>(Config.boxName);
+      await box.put(newProperty.id, newProperty);
+
+      if (context.mounted) {
+        Navigator.pop(context, newProperty);
+      }
     }
   }
 
@@ -69,7 +76,11 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Add Property"),
+        backgroundColor: AppColors.primary,
+        title: Text(
+          "Add Property",
+          style: const TextStyle(color: Colors.white)
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -119,8 +130,14 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
               ),
               const SizedBox(height: 24),
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.secondary,
+                ),
                 onPressed: _submit,
-                child: const Text("Save Property"),
+                child: Text(
+                  "Save Property",
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
             ],
           ),

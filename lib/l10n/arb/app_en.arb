@@ -12,5 +12,6 @@
   "title": "Where’s My Rent?",
   "home_welcome": "Welcome to Where’s My Rent!",
   "home_Logout": "Logout",
-  "home_AddProperty": "Agregar propiedad"
+  "home_AddProperty": "Agregar propiedad",
+  "home_noProperties": "No properties added yet."
 }

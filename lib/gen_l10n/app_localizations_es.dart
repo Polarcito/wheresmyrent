@@ -43,4 +43,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get home_AddProperty => 'Agregar propiedad';
+
+  @override
+  String get home_noProperties => 'No properties added yet.';
 }

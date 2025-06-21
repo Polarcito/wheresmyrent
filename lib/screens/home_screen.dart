@@ -1,20 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:wheresmyrent/gen_l10n/app_localizations.dart';
-import 'package:wheresmyrent/model/generic/app_colors.dart';
-import 'package:wheresmyrent/screens/add_property_screen.dart';
-import 'package:wheresmyrent/services/auth_service.dart';
-import 'package:wheresmyrent/screens/pin_login_screen.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:wheresmyrent/model/generic/config.dart';
 import 'package:wheresmyrent/model/property.dart';
+import 'package:wheresmyrent/screens/add_property_screen.dart';
+import 'package:wheresmyrent/model/generic/app_colors.dart';
+import 'package:wheresmyrent/screens/pin_login_screen.dart';
+import 'package:wheresmyrent/gen_l10n/app_localizations.dart';
+import 'package:wheresmyrent/screens/property_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final List<Property> _properties = [];
+  late final Box<Property> _box;
+
+  @override
+  void initState() {
+    super.initState();
+    _box = Hive.box<Property>(Config.boxName);
+  }
 
   void _logout() {
     Navigator.pushReplacement(
@@ -23,16 +31,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<void> _addProperty() async {
-    final newProperty = await Navigator.push<Property>(
+  void _goToAddProperty() async {
+    final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const AddPropertyScreen()),
+      MaterialPageRoute(builder: (_) => const AddPropertyScreen()),
     );
-
-    if (newProperty != null) {
-      setState(() {
-        _properties.add(newProperty);
-      });
+    if (result != null) {
+      setState(() {}); // Refresca la vista si se agregó una propiedad
     }
   }
 
@@ -43,10 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.primary,
-        title: Text(
-          "Where’s My Rent?",
-          style: const TextStyle(color: Colors.white),
-        ),
+        title: Text("Where’s My Rent?", style: const TextStyle(color: Colors.white)),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -56,30 +58,47 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: _properties.isEmpty
-          ? Center(
-              child: Text(
-                loc.home_welcome,
-                style: const TextStyle(fontSize: 18),
-              ),
-            )
-          : ListView.builder(
-              itemCount: _properties.length,
-              itemBuilder: (context, index) {
-                final p = _properties[index];
-                return ListTile(
-                  leading: const Icon(Icons.home),
-                  title: Text(p.name),
-                  subtitle: Text("${p.tenantName} • \$${p.monthlyRent.toStringAsFixed(0)}"),
-                  trailing: Text("📅 ${p.dueDay}"),
-                );
-              },
-            ),
+      body: ValueListenableBuilder(
+        valueListenable: _box.listenable(),
+        builder: (context, Box<Property> box, _) {
+          final properties = box.values.toList();
+
+          if (properties.isEmpty) {
+            return Center(child: Text(loc.home_noProperties));
+          }
+
+          return ListView.builder(
+            itemCount: properties.length,
+            itemBuilder: (context, index) {
+              final property = properties[index];
+              return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: ListTile(
+                  title: Text(property.name),
+                  subtitle: Text(property.address),
+                  trailing: Icon(
+                    property.hasPendingPayment ? Icons.warning : Icons.check_circle,
+                    color: property.hasPendingPayment ? AppColors.warning : AppColors.success,
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PropertyDetailScreen(property: property),
+                      ),
+                    );
+                  }
+                ),
+              );
+            },
+          );
+        },
+      ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.success,
-        onPressed: _addProperty,
+        onPressed: _goToAddProperty,
+        backgroundColor: AppColors.secondary,
         tooltip: loc.home_AddProperty,
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
