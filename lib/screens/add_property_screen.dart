@@ -7,7 +7,8 @@ import 'package:intl/intl.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 class AddPropertyScreen extends StatefulWidget {
-  const AddPropertyScreen({Key? key}) : super(key: key);
+  final Property? existingProperty;
+  const AddPropertyScreen({super.key, this.existingProperty});
 
   @override
   State<AddPropertyScreen> createState() => _AddPropertyScreenState();
@@ -20,31 +21,66 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
   final _nameController = TextEditingController();
   final _addressController = TextEditingController();
   final _tenantNameController = TextEditingController();
+  final _tenantEmailController = TextEditingController();
+  final _tenantPhoneController = TextEditingController();
   final _rentController = TextEditingController();
 
   int _selectedDueDay = 1;
   DateTime? _startDate;
 
+  @override
+  void initState() {
+    super.initState();
+    if (widget.existingProperty != null) {
+      final p = widget.existingProperty!;
+      _nameController.text = p.name;
+      _addressController.text = p.address;
+      _tenantNameController.text = p.tenantName;
+      _tenantEmailController.text = p.tenantEmail ?? '';
+      _tenantPhoneController.text = p.tenantPhone ?? '';
+      _rentController.text = p.monthlyRent.toString();
+      _selectedDueDay = p.dueDay;
+      _startDate = p.startDate;
+    }
+  }
+
   void _submit() async {
-    if (_formKey.currentState!.validate() && _startDate != null) {
+    if (!_formKey.currentState!.validate() || _startDate == null) return;
+
+    final box = Hive.box<Property>(Config.boxName);
+
+    if (widget.existingProperty != null) {
+      // Edición
+      final p = widget.existingProperty!;
+      p
+        ..name = _nameController.text.trim()
+        ..address = _addressController.text.trim()
+        ..tenantName = _tenantNameController.text.trim()
+        ..tenantEmail = _tenantEmailController.text.trim()
+        ..tenantPhone = _tenantPhoneController.text.trim()
+        ..monthlyRent = double.tryParse(_rentController.text.trim()) ?? 0
+        ..dueDay = _selectedDueDay
+        ..startDate = _startDate!;
+      await p.save();
+      if (context.mounted) Navigator.pop(context, p);
+    } else {
+      // Nueva propiedad
       final newProperty = Property(
         id: _uuid.v4(),
         name: _nameController.text.trim(),
         address: _addressController.text.trim(),
         tenantName: _tenantNameController.text.trim(),
         monthlyRent: double.tryParse(_rentController.text.trim()) ?? 0,
+        tenantEmail: _tenantEmailController.text.trim(),
+        tenantPhone: _tenantPhoneController.text.trim(),
         dueDay: _selectedDueDay,
         startDate: _startDate!,
       );
-
-      final box = Hive.box<Property>(Config.boxName);
       await box.put(newProperty.id, newProperty);
-
-      if (context.mounted) {
-        Navigator.pop(context, newProperty);
-      }
+      if (context.mounted) Navigator.pop(context, newProperty);
     }
   }
+
 
   Future<void> _selectStartDate() async {
     final picked = await showDatePicker(
@@ -87,60 +123,74 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
         child: Form(
           key: _formKey,
           child: ListView(
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: "Property Name"),
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Required' : null,
-              ),
-              TextFormField(
-                controller: _addressController,
-                decoration: const InputDecoration(labelText: "Address"),
-              ),
-              TextFormField(
-                controller: _tenantNameController,
-                decoration: const InputDecoration(labelText: "Tenant Name"),
-              ),
-              TextFormField(
-                controller: _rentController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: "Monthly Rent"),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<int>(
-                value: _selectedDueDay,
-                decoration: const InputDecoration(labelText: "Due Day"),
-                items: List.generate(
-                  31,
-                  (index) => DropdownMenuItem(
-                    value: index + 1,
-                    child: Text("${index + 1}"),
-                  ),
-                ),
-                onChanged: (value) {
-                  if (value != null) setState(() => _selectedDueDay = value);
-                },
-              ),
-              const SizedBox(height: 12),
-              ListTile(
-                title: Text("Start Date: $dateFormatted"),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: _selectStartDate,
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.secondary,
-                ),
-                onPressed: _submit,
-                child: Text(
-                  "Save Property",
-                  style: TextStyle(color: Colors.white),
+          children: [
+            const Text(
+              'Property Info',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _nameController,
+              decoration: const InputDecoration(labelText: "Property Name"),
+              validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+            ),
+            TextFormField(
+              controller: _addressController,
+              decoration: const InputDecoration(labelText: "Address"),
+            ),
+            TextFormField(
+              controller: _rentController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: "Monthly Rent"),
+            ),
+            DropdownButtonFormField<int>(
+              value: _selectedDueDay,
+              decoration: const InputDecoration(labelText: "Due Day"),
+              items: List.generate(
+                31,
+                (index) => DropdownMenuItem(
+                  value: index + 1,
+                  child: Text("${index + 1}"),
                 ),
               ),
-            ],
-          ),
+              onChanged: (value) {
+                if (value != null) setState(() => _selectedDueDay = value);
+              },
+            ),
+            ListTile(
+              title: Text("Start Date: $dateFormatted"),
+              trailing: const Icon(Icons.calendar_today),
+              onTap: _selectStartDate,
+            ),
+            const SizedBox(height: 24),
+
+            const Text(
+              'Tenant Info',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _tenantNameController,
+              decoration: const InputDecoration(labelText: "Tenant Name"),
+            ),
+            TextFormField(
+              controller: _tenantEmailController,
+              decoration: const InputDecoration(labelText: "Tenant Email"),
+              keyboardType: TextInputType.emailAddress,
+            ),
+            TextFormField(
+              controller: _tenantPhoneController,
+              decoration: const InputDecoration(labelText: "Tenant Phone"),
+              keyboardType: TextInputType.phone,
+            ),
+
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _submit,
+              child: const Text("Save Property"),
+            )
+          ],
+        ),
         ),
       ),
     );

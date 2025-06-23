@@ -46,4 +46,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get home_noProperties => 'No properties added yet.';
+
+  @override
+  String get home_delete_property_title => 'Delete Property.';
+
+  @override
+  String home_delete_property_body(String level) {
+    return 'Are you sure you want to delete $level? This action will be permanent.';
+  }
+
+  @override
+  String get button_cancel => 'Cancel';
+
+  @override
+  String get button_delete => 'Delete';
 }

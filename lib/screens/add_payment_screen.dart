@@ -1,12 +1,16 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:wheresmyrent/model/payment.dart';
 import 'package:wheresmyrent/model/property.dart';
 
 class AddPaymentScreen extends StatefulWidget {
   final Property property;
+  final DateTime? preselectedDate;
 
-  const AddPaymentScreen({super.key, required this.property});
+  const AddPaymentScreen({super.key, required this.property, this.preselectedDate});
 
   @override
   State<AddPaymentScreen> createState() => _AddPaymentScreenState();
@@ -14,43 +18,36 @@ class AddPaymentScreen extends StatefulWidget {
 
 class _AddPaymentScreenState extends State<AddPaymentScreen> {
   final _formKey = GlobalKey<FormState>();
-  DateTime _selectedDate = DateTime.now();
+  late DateTime _selectedDate;
   bool _isPaid = true;
   final _commentController = TextEditingController();
+  File? _selectedImage;
 
-  void _submit() {
-    if (!_formKey.currentState!.validate()) {
-      return;
+  @override
+  void initState() {
+    super.initState();
+    _selectedDate = widget.preselectedDate ?? DateTime.now();
+
+    Payment? existingPayment;
+
+    try {
+      existingPayment = widget.property.payments.firstWhere(
+        (p) => p.date.year == _selectedDate.year && p.date.month == _selectedDate.month,
+      );
+    } catch (e) {
+      existingPayment = null;
     }
 
-    final updatedPayments = [...widget.property.payments];
-    updatedPayments.add(Payment(date: _selectedDate, isPaid: _isPaid, comment: _commentController.text.trim()));
-
-    final updatedProperty = Property(
-      id: widget.property.id,
-      name: widget.property.name,
-      address: widget.property.address,
-      tenantName: widget.property.tenantName,
-      monthlyRent: widget.property.monthlyRent,
-      dueDay: widget.property.dueDay,
-      startDate: widget.property.startDate,
-      endDate: widget.property.endDate,
-      isActive: widget.property.isActive,
-      contractFilePath: widget.property.contractFilePath,
-      initialPhotos: widget.property.initialPhotos,
-      payments: updatedPayments,
-    );
-
-    widget.property
-      //..name = updatedProperty.name // Puedes copiar más campos si editas alguno
-      ..payments.clear()
-      ..payments.addAll(updatedPayments)
-      ..save();
-
-    Navigator.pop(context);
+    if (existingPayment != null) {
+      _isPaid = existingPayment.isPaid;
+      _commentController.text = existingPayment.comment ?? '';
+      if (existingPayment.photoPath != null && existingPayment.photoPath!.isNotEmpty) {
+        _selectedImage = File(existingPayment.photoPath!);
+      }
+    }
   }
 
-    @override
+  @override
   void dispose() {
     _commentController.dispose();
     super.dispose();
@@ -66,9 +63,61 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
     if (picked != null) setState(() => _selectedDate = picked);
   }
 
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final source = await showDialog<ImageSource>(
+      context: context,
+      builder: (_) => SimpleDialog(
+        title: const Text("Select Image Source"),
+        children: [
+          SimpleDialogOption(
+            child: const Text("Camera"),
+            onPressed: () => Navigator.pop(context, ImageSource.camera),
+          ),
+          SimpleDialogOption(
+            child: const Text("Gallery"),
+            onPressed: () => Navigator.pop(context, ImageSource.gallery),
+          ),
+        ],
+      ),
+    );
+
+    if (source != null) {
+      final pickedFile = await picker.pickImage(source: source);
+      if (pickedFile != null) {
+        setState(() => _selectedImage = File(pickedFile.path));
+      }
+    }
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+
+    // Elimina cualquier pago existente del mismo mes y año
+    final payments = [...widget.property.payments];
+    payments.removeWhere((p) =>
+        p.date.month == _selectedDate.month &&
+        p.date.year == _selectedDate.year);
+
+    payments.add(Payment(
+      date: _selectedDate,
+      isPaid: _isPaid,
+      comment: _commentController.text.trim(),
+      photoPath: _selectedImage?.path
+    ));
+
+    widget.property
+      ..payments.clear()
+      ..payments.addAll(payments)
+      ..save();
+
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     final dateText = DateFormat.yMMMd().format(_selectedDate);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Add Payment')),
       body: Padding(
@@ -91,7 +140,45 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                 controller: _commentController,
                 decoration: const InputDecoration(labelText: "Comment"),
                 validator: (value) =>
-                    value == null || value.isEmpty ? 'Required' : null,
+                    value == null || value.trim().isEmpty ? 'Required' : null,
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: _pickImage,
+                    icon: const Icon(Icons.photo),
+                    label: const Text('Add Photo'),
+                  ),
+                  const SizedBox(width: 12),
+                  if (_selectedImage != null)
+                    Stack(
+                      alignment: Alignment.topRight,
+                      children: [
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.file(
+                              _selectedImage!,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, size: 18),
+                          onPressed: () => setState(() => _selectedImage = null),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    ),
+                ],
               ),
               const SizedBox(height: 24),
               ElevatedButton(
@@ -100,7 +187,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
               )
             ],
           ),
-        ) 
+        ),
       ),
     );
   }

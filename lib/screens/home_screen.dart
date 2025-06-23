@@ -41,6 +41,12 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _deleteProperty(String id) async {
+    final box = Hive.box<Property>(Config.boxName);
+    await box.delete(id);
+    setState(() {}); // Refresca la lista
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
@@ -76,9 +82,35 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: ListTile(
                   title: Text(property.name),
                   subtitle: Text(property.address),
-                  trailing: Icon(
+                  leading: Icon(
                     property.hasPendingPayment ? Icons.warning : Icons.check_circle,
                     color: property.hasPendingPayment ? AppColors.warning : AppColors.success,
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    tooltip: AppLocalizations.of(context)!.button_delete,
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title:  Text(AppLocalizations.of(context)!.home_delete_property_title),
+                          content: Text(AppLocalizations.of(context)!.home_delete_property_body(property.name)),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: Text(AppLocalizations.of(context)!.button_cancel),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                _deleteProperty(property.id);
+                                Navigator.pop(context);
+                              },
+                              child: Text(AppLocalizations.of(context)!.button_delete, style: TextStyle(color: Colors.red)),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                   onTap: () {
                     Navigator.push(
@@ -87,7 +119,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         builder: (_) => PropertyDetailScreen(property: property),
                       ),
                     );
-                  }
+                  },
                 ),
               );
             },

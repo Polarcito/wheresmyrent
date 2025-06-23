@@ -6,40 +6,46 @@ part 'property.g.dart';
 @HiveType(typeId: 0)
 class Property extends HiveObject {
   @HiveField(0)
-  final String id;
+  String id;
 
   @HiveField(1)
-  final String name;
+  String name;
 
   @HiveField(2)
-  final String address;
+  String address;
 
   @HiveField(3)
-  final String tenantName;
+  String tenantName;
 
   @HiveField(4)
-  final double monthlyRent;
+  String? tenantEmail;
 
   @HiveField(5)
-  final int dueDay;
+  String? tenantPhone;
 
   @HiveField(6)
-  final DateTime startDate;
+  double monthlyRent;
 
   @HiveField(7)
-  final DateTime? endDate;
+  int dueDay;
 
   @HiveField(8)
-  final bool isActive;
+  DateTime startDate;
 
   @HiveField(9)
-  final String? contractFilePath;
+  DateTime? endDate;
 
   @HiveField(10)
-  final List<String> initialPhotos;
+  bool isActive;
 
   @HiveField(11)
-  final List<Payment> payments;
+  String? contractFilePath;
+
+  @HiveField(12)
+  List<String> initialPhotos;
+
+  @HiveField(13)
+  List<Payment> payments;
 
   Property({
     required this.id,
@@ -54,6 +60,8 @@ class Property extends HiveObject {
     this.contractFilePath,
     List<String>? initialPhotos,
     List<Payment>? payments,
+    this.tenantEmail,
+    this.tenantPhone,
   })  : initialPhotos = initialPhotos ?? [],
         payments = payments ?? [];
 

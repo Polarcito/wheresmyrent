@@ -172,6 +172,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No properties added yet.'**
   String get home_noProperties;
+
+  /// No description provided for @home_delete_property_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Property.'**
+  String get home_delete_property_title;
+
+  /// No description provided for @home_delete_property_body.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete {level}? This action will be permanent.'**
+  String home_delete_property_body(String level);
+
+  /// No description provided for @button_cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get button_cancel;
+
+  /// No description provided for @button_delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get button_delete;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

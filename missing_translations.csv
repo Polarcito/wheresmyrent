@@ -11,6 +11,10 @@
     "title",
     "home_Logout",
     "home_AddProperty",
-    "home_noProperties"
+    "home_noProperties",
+    "home_delete_property_title",
+    "home_delete_property_body",
+    "button_cancel",
+    "button_delete"
   ]
 }
