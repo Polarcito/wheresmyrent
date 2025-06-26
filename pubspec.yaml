@@ -41,6 +41,8 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   image_picker: ^1.0.4
+  file_selector: ^1.0.3
+  open_file: ^3.3.2
 
 dev_dependencies:
   hive_generator: ^2.0.1

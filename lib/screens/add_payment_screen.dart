@@ -5,6 +5,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:wheresmyrent/model/payment.dart';
 import 'package:wheresmyrent/model/property.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
+import 'dart:io';
 
 class AddPaymentScreen extends StatefulWidget {
   final Property property;
@@ -90,11 +93,44 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
     }
   }
 
-  void _submit() {
+  Future<String?> savePaymentPhoto(File selectedFile, String propertyId, DateTime paymentDate) async {
+    final appDir = await getApplicationDocumentsDirectory();
+    final photoDir = Directory('${appDir.path}/payment_photos');
+
+    if (!await photoDir.exists()) {
+      await photoDir.create(recursive: true);
+    }
+
+    final extension = path.extension(selectedFile.path);
+    final fileName = '${propertyId}_${paymentDate.toIso8601String().substring(0, 10)}$extension';
+    final newPath = path.join(photoDir.path, fileName);
+
+    final savedFile = await selectedFile.copy(newPath);
+    return savedFile.path;
+  }
+
+  void _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
     // Elimina cualquier pago existente del mismo mes y año
     final payments = [...widget.property.payments];
+    final existingPayment = payments.firstWhere(
+      (p) => p.date.month == _selectedDate.month && p.date.year == _selectedDate.year,
+      orElse: () => Payment(date: _selectedDate, isPaid: false, comment: _commentController.text.trim()),
+    );
+
+    // 🔥 Borra la foto anterior si se está reemplazando
+    if (existingPayment.photoPath != null &&
+        existingPayment.photoPath != _selectedImage?.path) {
+      final old = File(existingPayment.photoPath!);
+      if (await old.exists()) await old.delete();
+    }
+
+    String? internalImagePath;
+    if (_selectedImage != null) {
+      internalImagePath = await savePaymentPhoto(_selectedImage!, widget.property.id, _selectedDate);
+    }
+
     payments.removeWhere((p) =>
         p.date.month == _selectedDate.month &&
         p.date.year == _selectedDate.year);
@@ -103,7 +139,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
       date: _selectedDate,
       isPaid: _isPaid,
       comment: _commentController.text.trim(),
-      photoPath: _selectedImage?.path
+      photoPath: internalImagePath,
     ));
 
     widget.property
@@ -113,6 +149,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
 
     Navigator.pop(context);
   }
+
 
   @override
   Widget build(BuildContext context) {

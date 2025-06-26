@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:wheresmyrent/model/payment.dart';
@@ -9,6 +9,9 @@ import 'package:wheresmyrent/screens/add_payment_screen.dart';
 import 'package:wheresmyrent/screens/add_property_screen.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:wheresmyrent/model/generic/config.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 
 class PropertyDetailScreen extends StatefulWidget {
   final Property property;
@@ -29,6 +32,7 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
     _currentProperty = widget.property;
   }
 
+  //actualiza la instancia de HIVE para poder ver los cambios que se realizan al objeto, esto ayuda a refrescar la UI
   Future<void> _reloadProperty() async {
     final box = Hive.box<Property>(Config.boxName);
     final updated = box.get(_currentProperty.id);
@@ -59,8 +63,78 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
     );
 
     if (confirmed == true) {
+      //Borrar archivo de contrato si existe
+      if (_currentProperty.contractFilePath != null) {
+        final contractFile = File(_currentProperty.contractFilePath!);
+        if (await contractFile.exists()) await contractFile.delete();
+      }
+
+      //Borrar todas las fotos de pagos si existen
+      for (final payment in _currentProperty.payments) {
+        if (payment.photoPath != null) {
+          final photoFile = File(payment.photoPath!);
+          if (await photoFile.exists()) await photoFile.delete();
+        }
+      }
+
+      //Eliminar la propiedad de Hive
       await _currentProperty.delete();
+
+      //Volver a la pantalla anterior
       if (mounted) Navigator.pop(context);
+    }
+  }
+
+  Future<void> pickContractFile(Property property) async {
+    final typeGroup = XTypeGroup(
+      label: 'Contratos',
+      extensions: ['pdf', 'jpg', 'jpeg', 'png'],
+    );
+
+    final file = await openFile(acceptedTypeGroups: [typeGroup]);
+
+    if (file != null) {
+      final original = File(file.path);
+
+      // Obtener carpeta interna segura
+      final appDir = await getApplicationDocumentsDirectory();
+      final contractsDir = Directory('${appDir.path}/contracts');
+
+      // Crear carpeta si no existe
+      if (!await contractsDir.exists()) {
+        await contractsDir.create(recursive: true);
+      }
+
+      // Crear nuevo archivo con nombre único
+      final fileName = path.basename(file.path); // nombre original
+      final newPath = path.join(contractsDir.path, '${property.id}_$fileName');
+
+      final savedFile = await original.copy(newPath);
+
+      // Guardar la nueva ruta
+      property.contractFilePath = savedFile.path;
+      await property.save();
+    }
+  }
+
+  void openContractFileIfExists(String path) {
+    final file = File(path);
+    if (file.existsSync()) {
+      OpenFile.open(path);
+    } else {
+      print("Archivo no encontrado. Puede haber sido movido o eliminado.");
+    }
+  }
+
+  Future<void> deleteContractFile(Property property) async {
+    final path = property.contractFilePath;
+    if (path != null) {
+      final file = File(path);
+      if (await file.exists()) {
+        await file.delete();
+      }
+      property.contractFilePath = null;
+      await property.save();
     }
   }
 
@@ -133,6 +207,61 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
                   ],
                 ),
               ),
+              if (_currentProperty.contractFilePath != null) ...[
+                ListTile(
+                  leading: Icon(Icons.picture_as_pdf),
+                  title: Text("Ver contrato"),
+                  subtitle: Text(_currentProperty.contractFilePath!.split('/').last),
+                  trailing: Icon(Icons.open_in_new),
+                  onTap: () => openContractFileIfExists(_currentProperty.contractFilePath!),
+                ),
+                OverflowBar(
+                  alignment: MainAxisAlignment.start,
+                  spacing: 12.0, // Espacio horizontal entre botones
+                  overflowSpacing: 8.0, // Espacio vertical cuando se hace wrap
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        await pickContractFile(_currentProperty);
+                        await _reloadProperty(); // <- esto reemplaza el setState
+                      },
+                      icon: Icon(Icons.upload_file),
+                      label: Text("Reemplazar"),
+                    ),
+                    TextButton.icon(
+                      onPressed: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (_) => AlertDialog(
+                            title: Text("¿Eliminar contrato?"),
+                            content: Text("Esta acción no se puede deshacer."),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(context, false), child: Text("Cancelar")),
+                              TextButton(onPressed: () => Navigator.pop(context, true), child: Text("Eliminar")),
+                            ],
+                          ),
+                        );
+                        if (confirm == true) {
+                          await deleteContractFile(_currentProperty);
+                          await _reloadProperty();
+                        }
+                      },
+                      icon: Icon(Icons.delete),
+                      label: Text("Eliminar"),
+                      style: TextButton.styleFrom(foregroundColor: Colors.red),
+                    ),
+                  ],
+                ),
+              ] else ...[
+                ListTile(
+                  leading: Icon(Icons.upload_file),
+                  title: Text("Agregar contrato"),
+                  onTap: () async {
+                    await pickContractFile(_currentProperty);
+                    await _reloadProperty();
+                  }
+                ),
+              ]
             ],
           ),
           const SizedBox(height: 24),
@@ -252,9 +381,19 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
                             TextButton(
                               onPressed: () {
                                 setState(() {
-                                  _currentProperty.payments.removeWhere(
+                                  final removed = _currentProperty.payments.firstWhere(
                                     (p) => p.date.month == month && p.date.year == _selectedYear,
                                   );
+
+                                  //Borra la foto asociada si existe
+                                  if (removed.photoPath != null) {
+                                    final file = File(removed.photoPath!);
+                                    if (file.existsSync()) {
+                                      file.delete();
+                                    }
+                                  }
+
+                                  _currentProperty.payments.remove(removed);
                                   _currentProperty.save();
                                 });
                                 Navigator.pop(context);
