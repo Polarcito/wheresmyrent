@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wheresmyrent/gen_l10n/app_localizations.dart';
-import 'package:wheresmyrent/model/generic/app_colors.dart';
+import 'package:wheresmyrent/model/generic/app_theme.dart';
 import '../services/auth_service.dart';
 import 'home_screen.dart';
 

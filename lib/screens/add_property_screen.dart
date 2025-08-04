@@ -9,7 +9,7 @@ import 'package:wheresmyrent/model/property.dart';
 import 'package:uuid/uuid.dart';
 
 class AddPropertyScreen extends StatefulWidget {
-  final Property? existingProperty; // <-- NUEVO
+  final Property? existingProperty;
 
   const AddPropertyScreen({super.key, this.existingProperty});
 
@@ -184,13 +184,15 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
                     TextButton(
                       onPressed: _previousStep,
                       child: const Text('Volver'),
-                    ),
+                    )
+                  else
+                    const Spacer(), // empuja el botón derecho cuando no hay "Volver"
                   ElevatedButton(
                     onPressed: _nextStep,
                     child: Text(currentStep < 2 ? 'Siguiente' : 'Guardar'),
                   ),
                 ],
-              ),
+              )
             ],
           ),
         ),
@@ -206,11 +208,13 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
           decoration: const InputDecoration(labelText: 'Nombre de la propiedad'),
           validator: (value) => value!.isEmpty ? 'Este campo es obligatorio' : null,
         ),
+        const SizedBox(height: 16),
         TextFormField(
           controller: _addressController,
           decoration: const InputDecoration(labelText: 'Dirección'),
           validator: (value) => value!.isEmpty ? 'Este campo es obligatorio' : null,
         ),
+        const SizedBox(height: 16),
         TextFormField(
           controller: _rentController,
           keyboardType: TextInputType.number,
@@ -229,6 +233,7 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
             return null;
           },
         ),
+        const SizedBox(height: 16),
         DropdownButtonFormField<int>(
           value: _selectedDueDay,
           decoration: const InputDecoration(labelText: 'Día de vencimiento'),
@@ -247,8 +252,13 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
           validator: (value) =>
               value == null ? 'Selecciona un día de vencimiento' : null,
         ),
-        const SizedBox(height: 12),
-        Text('Fecha de inicio del contrato:'),
+        const SizedBox(height: 16),
+        Text(
+          'Fecha de inicio del contrato:',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
         Row(
           children: [
             Expanded(
@@ -258,7 +268,9 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
                     : 'Fecha no seleccionada',
                 style: TextStyle(
                   fontSize: 16,
-                  color: _startDate != null ? Colors.black : Colors.red,
+                  color: _startDate != null
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.error,
                 ),
               ),
             ),
@@ -266,6 +278,7 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
               onPressed: _pickStartDate,
               icon: const Icon(Icons.calendar_today),
               tooltip: 'Seleccionar fecha',
+              color: Theme.of(context).colorScheme.primary,
             ),
           ],
         )
@@ -281,6 +294,7 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
           decoration: const InputDecoration(labelText: 'Nombre del arrendatario'),
           validator: (value) => value!.isEmpty ? 'Este campo es obligatorio' : null,
         ),
+        const SizedBox(height: 16),
         TextFormField(
           controller: _tenantEmailController,
           decoration: const InputDecoration(labelText: 'Correo electrónico'),
@@ -290,6 +304,7 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
             return emailRegex.hasMatch(value) ? null : 'Correo no válido';
           },
         ),
+        const SizedBox(height: 16),
         TextFormField(
           controller: _tenantPhoneController,
           decoration: const InputDecoration(labelText: 'Teléfono'),
@@ -302,13 +317,23 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
   Widget _buildStep3() {
     return ListView(
       children: [
-        const Text('Archivo de contrato (opcional)'),
+        Text(
+          'Archivo de contrato (opcional)',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
         TextButton(
           onPressed: _pickContractFile,
           child: Text(_contractFilePath != null ? '📄 Archivo seleccionado' : 'Seleccionar archivo'),
         ),
         const SizedBox(height: 16),
-        const Text('Fotos iniciales del inmueble (opcional)'),
+        Text(
+          'Fotos iniciales del inmueble (opcional)',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
         TextButton(
           onPressed: _pickInitialPhotos,
           child: const Text('Seleccionar fotos'),

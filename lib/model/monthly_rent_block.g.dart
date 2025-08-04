@@ -19,22 +19,25 @@ class MonthlyRentBlockAdapter extends TypeAdapter<MonthlyRentBlock> {
     return MonthlyRentBlock(
       year: fields[0] as int,
       month: fields[1] as int,
-      payments: (fields[2] as List?)?.cast<RentPayment>(),
-      maintenanceEntries: (fields[3] as List?)?.cast<MaintenanceEntry>(),
+      effectiveRent: fields[2] as double?,
+      payments: (fields[3] as List?)?.cast<RentPayment>(),
+      maintenanceEntries: (fields[4] as List?)?.cast<MaintenanceEntry>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, MonthlyRentBlock obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.year)
       ..writeByte(1)
       ..write(obj.month)
       ..writeByte(2)
-      ..write(obj.payments)
+      ..write(obj.effectiveRent)
       ..writeByte(3)
+      ..write(obj.payments)
+      ..writeByte(4)
       ..write(obj.maintenanceEntries);
   }
 

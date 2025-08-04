@@ -31,3 +31,18 @@ class MonthlyRentBlock extends HiveObject {
        maintenanceEntries = maintenanceEntries ?? [],
        effectiveRent = effectiveRent ?? 0;
 }
+
+extension RentBlockStatus on MonthlyRentBlock {
+  String getPaymentStatus() {
+    if (payments.isEmpty) return 'unpaid';
+
+    final totalPaid = payments.fold<double>(0, (sum, p) => sum + p.amount);
+    if (totalPaid >= effectiveRent) {
+      return 'paid';
+    } else if (totalPaid > 0) {
+      return 'partial';
+    } else {
+      return 'unpaid';
+    }
+  }
+}

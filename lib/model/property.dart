@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:hive/hive.dart';
 import 'package:wheresmyrent/model/monthly_rent_block.dart';
 
@@ -74,5 +75,13 @@ class Property extends HiveObject {
     }
 
     return blocks;
+  }
+}
+
+extension PropertyExtensions on Property {
+  MonthlyRentBlock? getBlockFor(DateTime date) {
+    return monthlyBlocks.firstWhereOrNull(
+      (block) => block.year == date.year && block.month == date.month,
+    );
   }
 }

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:pie_chart/pie_chart.dart';
-import 'package:wheresmyrent/model/generic/app_colors.dart';
+import 'package:wheresmyrent/model/generic/app_theme.dart';
 import 'package:wheresmyrent/model/maintenance_entry.dart';
 import 'package:wheresmyrent/model/property.dart';
 import 'package:wheresmyrent/model/monthly_rent_block.dart';
@@ -93,11 +93,12 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
               chartRadius: 180,
               chartType: ChartType.disc,
               ringStrokeWidth: 32,
-              legendOptions: const LegendOptions(showLegends: true),
-              chartValuesOptions: const ChartValuesOptions(
+              legendOptions: LegendOptions(showLegends: true, legendTextStyle: TextStyle(color: Theme.of(context).colorScheme.primary)),
+              chartValuesOptions: ChartValuesOptions(
                 showChartValuesInPercentage: true,
                 showChartValueBackground: false,
                 decimalPlaces: 0,
+                chartValueStyle: TextStyle(color: Theme.of(context).colorScheme.surface)
               ),
             ),
           ),
@@ -114,42 +115,40 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
           const SizedBox(height: 8),
           _buildResumenRow("Excedente:", '\$${excedente.toStringAsFixed(0)}',
               color: Colors.green),
-          const Divider(height: 32),
+          Divider(height: 32, color: Theme.of(context).colorScheme.primary),
           _buildResumenRow("Gastos de mantención:", '\$${totalMantencion.toStringAsFixed(0)}',
               color: Colors.orange),
-          const Divider(height: 32),
+          Divider(height: 32, color: Theme.of(context).colorScheme.primary),
           _buildResumenRow(
             "Balance final:",
             '\$${balanceFinal.toStringAsFixed(0)}',
             color: balanceFinal >= 0 ? Colors.green : Colors.red,
           ),
           const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              ElevatedButton.icon(
-                onPressed: _showAddPaymentSheet,
-                icon: const Icon(Icons.payments),
-                label: const Text(
-                  "Ingresar pago",
-                  style: TextStyle(color: Colors.white),
+          Center(
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              alignment: WrapAlignment.center,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: _showAddPaymentSheet,
+                  icon: const Icon(Icons.payments),
+                  label: const Text("Pago"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                  ),
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
+                ElevatedButton.icon(
+                  onPressed: _showAddMaintenanceSheet,
+                  icon: const Icon(Icons.build_circle),
+                  label: const Text("Mantención"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                  ),
                 ),
-              ),
-              ElevatedButton.icon(
-                onPressed: _showAddMaintenanceSheet,
-                icon: const Icon(Icons.build_circle),
-                label: const Text(
-                  "Ingresar mantención",
-                  style: TextStyle(color: Colors.white),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -160,8 +159,8 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 16)),
-        Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
+        Text(label, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary,),),
+        Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary,),),
       ],
     );
   }
@@ -172,12 +171,12 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(child: Text(label, style: const TextStyle(fontSize: 16))),
+          Expanded(child: Text(label, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary,),)),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                icon: const Icon(Icons.edit, size: 18),
+                icon: Icon(Icons.edit, size: 18, color: Theme.of(context).colorScheme.primary,),
                 tooltip: 'Editar monto esperado',
                 onPressed: onEdit,
                 padding: const EdgeInsets.only(left: 4),
@@ -185,11 +184,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
               ),
               Text(
                 value,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary,),
               ),
             ],
           ),
@@ -200,14 +195,19 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
 
   Widget _buildPagosTab() {
     final payments = widget.block.payments;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Stack(
       children: [
         if (payments.isEmpty)
-          const Center(
+          Center(
             child: Text(
               "Sin pagos registrados",
-              style: TextStyle(fontSize: 16),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontSize: 16,
+                color: colorScheme.onSurface.withOpacity(0.7),
+              ),
             ),
           )
         else
@@ -218,51 +218,90 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
               final p = payments[index];
 
               return Card(
-                margin: const EdgeInsets.symmetric(vertical: 6),
-                child: ListTile(
-                  leading: const Icon(Icons.attach_money, color: Colors.green),
-                  title: Text(
-                    '\$${p.amount.toStringAsFixed(0)}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                    ),
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                elevation: 3,
+                color: colorScheme.surface,
+                shadowColor: theme.shadowColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(
+                    color: theme.dividerColor.withOpacity(0.2),
                   ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(DateFormat.yMMMd('es').format(p.date)),
-                      if (p.note != null) Text(p.note!),
-                    ],
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (p.photoPaths.isNotEmpty)
-                        const Icon(Icons.image, size: 20, color: Colors.grey),
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () => _showAddPaymentSheet(
-                          existingPayment: p,
-                          onSave: (updated) {
-                            setState(() {
-                              payments[index] = updated;
-                              widget.property.save();
-                            });
-                          },
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _deletePayment(p),
-                      ),
-                    ],
-                  ),
+                ),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
                   onTap: () {
                     if (p.photoPaths.isNotEmpty) {
                       _showImageGallery(p.photoPaths);
                     }
                   },
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 24,
+                          backgroundColor: Colors.green.withOpacity(0.1),
+                          child: Icon(
+                            Icons.attach_money,
+                            color: Colors.green.shade600,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '\$${p.amount.toStringAsFixed(0)}',
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green.shade600,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                DateFormat.yMMMd('es').format(p.date),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.onSurface.withOpacity(0.8),
+                                ),
+                              ),
+                              if (p.note != null)
+                                Text(
+                                  p.note!,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.onSurface.withOpacity(0.6),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Column(
+                          children: [
+                            if (p.photoPaths.isNotEmpty)
+                              Icon(Icons.image, size: 20, color: colorScheme.outline),
+                            IconButton(
+                              icon: Icon(Icons.edit, color: colorScheme.primary),
+                              onPressed: () => _showAddPaymentSheet(
+                                existingPayment: p,
+                                onSave: (updated) {
+                                  setState(() {
+                                    payments[index] = updated;
+                                    widget.property.save();
+                                  });
+                                },
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.delete, color: colorScheme.error),
+                              onPressed: () => _deletePayment(p),
+                            ),
+                          ],
+                        )
+                      ],
+                    ),
+                  ),
                 ),
               );
             },
@@ -274,8 +313,9 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
           right: 16,
           child: FloatingActionButton(
             onPressed: _showAddPaymentSheet,
-            child: const Icon(Icons.add),
             tooltip: 'Ingresar pago',
+            backgroundColor: colorScheme.primary,
+            child: Icon(Icons.add, color: colorScheme.onPrimary),
           ),
         ),
       ],
@@ -284,14 +324,19 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
 
   Widget _buildMantencionTab() {
     final entries = widget.block.maintenanceEntries;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Stack(
       children: [
         if (entries.isEmpty)
-          const Center(
+          Center(
             child: Text(
               "Sin registros de mantención",
-              style: TextStyle(fontSize: 16),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontSize: 16,
+                color: colorScheme.onSurface.withOpacity(0.7),
+              ),
             ),
           )
         else
@@ -300,72 +345,107 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
             itemCount: entries.length,
             itemBuilder: (context, index) {
               final m = entries[index];
+              final isPositive = m.amount >= 0;
+              final amountColor = isPositive ? Colors.green.shade600 : Colors.red.shade600;
+              final avatarBg = isPositive ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1);
 
               return Card(
-                margin: const EdgeInsets.symmetric(vertical: 6),
-                child: ListTile(
-                  leading: Icon(
-                    Icons.build_circle,
-                    color: m.amount >= 0 ? Colors.green : Colors.red,
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                elevation: 3,
+                color: colorScheme.surface,
+                shadowColor: theme.shadowColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(
+                    color: theme.dividerColor.withOpacity(0.2),
                   ),
-                  title: Text(
-                    '\$${m.amount.toStringAsFixed(0)}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: m.amount >= 0 ? Colors.green : Colors.red,
-                    ),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(m.description),
-                      Text(
-                        DateFormat.yMMMd('es').format(m.date),
-                        style: const TextStyle(color: Colors.black54),
-                      ),
-                    ],
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (m.photoPaths.isNotEmpty)
-                        const Icon(Icons.image, size: 20, color: Colors.grey),
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () => _showAddMaintenanceSheet(
-                          existingEntry: m,
-                          onSave: (updated) {
-                            setState(() {
-                              entries[index] = updated;
-                              widget.property.save();
-                            });
-                          },
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _deleteMaintenance(m),
-                      ),
-                    ],
-                  ),
+                ),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
                   onTap: () {
                     if (m.photoPaths.isNotEmpty) {
                       _showImageGallery(m.photoPaths);
                     }
                   },
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 24,
+                          backgroundColor: avatarBg,
+                          child: Icon(
+                            Icons.build_circle,
+                            color: amountColor,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '\$${m.amount.toStringAsFixed(0)}',
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: amountColor,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                m.description,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.onSurface.withOpacity(0.9),
+                                ),
+                              ),
+                              Text(
+                                DateFormat.yMMMd('es').format(m.date),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.onSurface.withOpacity(0.6),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Column(
+                          children: [
+                            if (m.photoPaths.isNotEmpty)
+                              Icon(Icons.image, size: 20, color: colorScheme.outline),
+                            IconButton(
+                              icon: Icon(Icons.edit, color: colorScheme.primary),
+                              onPressed: () => _showAddMaintenanceSheet(
+                                existingEntry: m,
+                                onSave: (updated) {
+                                  setState(() {
+                                    entries[index] = updated;
+                                    widget.property.save();
+                                  });
+                                },
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.delete, color: colorScheme.error),
+                              onPressed: () => _deleteMaintenance(m),
+                            ),
+                          ],
+                        )
+                      ],
+                    ),
+                  ),
                 ),
               );
             },
           ),
 
-        // FAB siempre visible
         Positioned(
           bottom: 16,
           right: 16,
           child: FloatingActionButton(
             onPressed: _showAddMaintenanceSheet,
-            child: const Icon(Icons.add),
             tooltip: 'Agregar mantención',
+            backgroundColor: colorScheme.primary,
+            child: Icon(Icons.add, color: colorScheme.onPrimary),
           ),
         ),
       ],
@@ -404,8 +484,9 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                 children: [
                   Text(
                     existingPayment != null ? 'Editar pago' : 'Ingresar pago',
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
@@ -422,7 +503,12 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Text('Fecha:'),
+                      Text(
+                        'Fecha:',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+                        ),
+                      ),
                       TextButton(
                         onPressed: () async {
                           final picked = await showDatePicker(
@@ -442,37 +528,40 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: () async {
-                          final picker = ImagePicker();
-                          final images = await picker.pickMultiImage();
-                          if (images.isNotEmpty) {
-                            setModalState(() {
-                              selectedPhotos.addAll(images.map((e) => e.path));
-                            });
-                          }
-                        },
-                        icon: const Icon(Icons.photo_library),
-                        label: const Text('Galería'),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton.icon(
-                        onPressed: () async {
-                          final picker = ImagePicker();
-                          final image =
-                              await picker.pickImage(source: ImageSource.camera);
-                          if (image != null) {
-                            setModalState(() {
-                              selectedPhotos.add(image.path);
-                            });
-                          }
-                        },
-                        icon: const Icon(Icons.camera_alt),
-                        label: const Text('Cámara'),
-                      ),
-                    ],
+                  Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            final picker = ImagePicker();
+                            final images = await picker.pickMultiImage();
+                            if (images.isNotEmpty) {
+                              setModalState(() {
+                                selectedPhotos.addAll(images.map((e) => e.path));
+                              });
+                            }
+                          },
+                          icon: const Icon(Icons.photo_library),
+                          label: const Text('Galería'),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            final picker = ImagePicker();
+                            final image =
+                                await picker.pickImage(source: ImageSource.camera);
+                            if (image != null) {
+                              setModalState(() {
+                                selectedPhotos.add(image.path);
+                              });
+                            }
+                          },
+                          icon: const Icon(Icons.camera_alt),
+                          label: const Text('Cámara'),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 8),
                   if (selectedPhotos.isNotEmpty)
@@ -592,9 +681,8 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                     existingEntry != null
                         ? 'Editar mantención'
                         : 'Ingresar mantención',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -614,7 +702,12 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Text('Fecha:'),
+                      Text(
+                        'Fecha:',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+                        ),
+                      ),
                       TextButton(
                         onPressed: () async {
                           final picked = await showDatePicker(
@@ -632,35 +725,38 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: () async {
-                          final picker = ImagePicker();
-                          final images = await picker.pickMultiImage();
-                          if (images.isNotEmpty) {
-                            setModalState(() {
-                              selectedPhotos.addAll(images.map((e) => e.path));
-                            });
-                          }
-                        },
-                        icon: const Icon(Icons.photo_library),
-                        label: const Text('Galería'),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton.icon(
-                        onPressed: () async {
-                          final picker = ImagePicker();
-                          final image =
-                              await picker.pickImage(source: ImageSource.camera);
-                          if (image != null) {
-                            setModalState(() => selectedPhotos.add(image.path));
-                          }
-                        },
-                        icon: const Icon(Icons.camera_alt),
-                        label: const Text('Cámara'),
-                      ),
-                    ],
+                  Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            final picker = ImagePicker();
+                            final images = await picker.pickMultiImage();
+                            if (images.isNotEmpty) {
+                              setModalState(() {
+                                selectedPhotos.addAll(images.map((e) => e.path));
+                              });
+                            }
+                          },
+                          icon: const Icon(Icons.photo_library),
+                          label: const Text('Galería'),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            final picker = ImagePicker();
+                            final image =
+                                await picker.pickImage(source: ImageSource.camera);
+                            if (image != null) {
+                              setModalState(() => selectedPhotos.add(image.path));
+                            }
+                          },
+                          icon: const Icon(Icons.camera_alt),
+                          label: const Text('Cámara'),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 8),
                   if (selectedPhotos.isNotEmpty)

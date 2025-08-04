@@ -89,7 +89,13 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
   Widget _buildYearSelector() {
     return Row(
       children: [
-        const Text('Año: ', style: TextStyle(fontSize: 16)),
+        Text(
+          'Año:',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+        const SizedBox(width: 16),
         DropdownButton<int>(
           value: selectedYear,
           onChanged: (value) {
@@ -103,9 +109,26 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
             final year = DateTime.now().year - 5 + i;
             return DropdownMenuItem(
               value: year,
-              child: Text(year.toString()),
+              child: Text(
+                year.toString(),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             );
           }),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.primary,
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+          icon: Icon(
+            Icons.arrow_drop_down,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          dropdownColor: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
         ),
       ],
     );

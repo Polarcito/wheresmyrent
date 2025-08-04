@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wheresmyrent/gen_l10n/app_localizations.dart';
-import 'package:wheresmyrent/model/generic/app_colors.dart';
+import 'package:wheresmyrent/model/generic/app_theme.dart';
 import '../services/auth_service.dart';
 import 'home_screen.dart';
 
@@ -67,14 +67,8 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
               Text(_errorText!, style: const TextStyle(color: Colors.red)),
             const SizedBox(height: 24),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.secondary,
-              ),
               onPressed: _validatePin,
-              child: Text(
-                AppLocalizations.of(context)!.login_unlock,
-                style: TextStyle(color: Colors.white),
-              ),
+              child: Text(AppLocalizations.of(context)!.login_unlock),
             ),
           ],
         ),
