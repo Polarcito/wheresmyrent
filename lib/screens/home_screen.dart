@@ -83,8 +83,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: Text(property.name),
                   subtitle: Text(property.address),
                   leading: Icon(
-                    property.hasPendingPayment ? Icons.warning : Icons.check_circle,
-                    color: property.hasPendingPayment ? AppColors.warning : AppColors.success,
+                    Icons.check_circle,
+                    color: AppColors.success,
                   ),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete, color: Colors.red),

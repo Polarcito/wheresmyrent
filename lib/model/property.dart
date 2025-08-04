@@ -1,5 +1,5 @@
 import 'package:hive/hive.dart';
-import 'payment.dart';
+import 'package:wheresmyrent/model/monthly_rent_block.dart';
 
 part 'property.g.dart';
 
@@ -18,10 +18,10 @@ class Property extends HiveObject {
   String tenantName;
 
   @HiveField(4)
-  String? tenantEmail;
+  String tenantEmail;
 
   @HiveField(5)
-  String? tenantPhone;
+  String tenantPhone;
 
   @HiveField(6)
   double monthlyRent;
@@ -45,32 +45,34 @@ class Property extends HiveObject {
   List<String> initialPhotos;
 
   @HiveField(13)
-  List<Payment> payments;
+  List<MonthlyRentBlock> monthlyBlocks;
 
   Property({
     required this.id,
     required this.name,
     required this.address,
-    required this.tenantName,
     required this.monthlyRent,
     required this.dueDay,
     required this.startDate,
+    required this.tenantName,
+    required this.tenantEmail,
+    required this.tenantPhone,
     this.endDate,
     this.isActive = true,
     this.contractFilePath,
     List<String>? initialPhotos,
-    List<Payment>? payments,
-    this.tenantEmail,
-    this.tenantPhone,
+    List<MonthlyRentBlock>? monthlyBlocks,
   })  : initialPhotos = initialPhotos ?? [],
-        payments = payments ?? [];
+        monthlyBlocks = monthlyBlocks ?? _generateInitialBlocks(startDate, monthlyRent);
 
+  static List<MonthlyRentBlock> _generateInitialBlocks(DateTime startDate, double monthlyRent) {
+    final List<MonthlyRentBlock> blocks = [];
+    final int year = DateTime.now().year;
 
-  bool get hasPendingPayment {
-    final now = DateTime.now();
-    return payments.every((p) =>
-        !(p.date.month == now.month &&
-          p.date.year == now.year &&
-          p.isPaid));
+    for (int month = 1; month <= 12; month++) {
+      blocks.add(MonthlyRentBlock(year: year, month: month, effectiveRent: monthlyRent));
+    }
+
+    return blocks;
   }
 }

@@ -1,41 +1,44 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'payment.dart';
+part of 'maintenance_entry.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
 
-class PaymentAdapter extends TypeAdapter<Payment> {
+class MaintenanceEntryAdapter extends TypeAdapter<MaintenanceEntry> {
   @override
-  final int typeId = 1;
+  final int typeId = 4;
 
   @override
-  Payment read(BinaryReader reader) {
+  MaintenanceEntry read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return Payment(
-      date: fields[0] as DateTime,
-      isPaid: fields[1] as bool,
-      photoPath: fields[2] as String?,
-      comment: fields[3] as String?,
+    return MaintenanceEntry(
+      id: fields[0] as String,
+      description: fields[1] as String,
+      amount: fields[2] as double,
+      date: fields[3] as DateTime,
+      photoPaths: (fields[4] as List?)?.cast<String>(),
     );
   }
 
   @override
-  void write(BinaryWriter writer, Payment obj) {
+  void write(BinaryWriter writer, MaintenanceEntry obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
-      ..write(obj.date)
+      ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.isPaid)
+      ..write(obj.description)
       ..writeByte(2)
-      ..write(obj.photoPath)
+      ..write(obj.amount)
       ..writeByte(3)
-      ..write(obj.comment);
+      ..write(obj.date)
+      ..writeByte(4)
+      ..write(obj.photoPaths);
   }
 
   @override
@@ -44,7 +47,7 @@ class PaymentAdapter extends TypeAdapter<Payment> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is PaymentAdapter &&
+      other is MaintenanceEntryAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

@@ -1,17 +1,11 @@
 import 'dart:io';
-import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:wheresmyrent/model/payment.dart';
-import 'package:wheresmyrent/model/property.dart';
-import 'package:wheresmyrent/model/generic/app_colors.dart';
-import 'package:wheresmyrent/screens/add_payment_screen.dart';
-import 'package:wheresmyrent/screens/add_property_screen.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:wheresmyrent/model/generic/config.dart';
 import 'package:open_file/open_file.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
+import 'package:wheresmyrent/model/monthly_rent_block.dart';
+import 'package:wheresmyrent/model/property.dart';
+import 'package:wheresmyrent/screens/add_property_screen.dart';
+import 'package:wheresmyrent/screens/monthly_block_detail_screen.dart';
 
 class PropertyDetailScreen extends StatefulWidget {
   final Property property;
@@ -23,464 +17,350 @@ class PropertyDetailScreen extends StatefulWidget {
 }
 
 class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
-  int _selectedYear = DateTime.now().year;
-  late Property _currentProperty;
+  late int selectedYear;
 
   @override
   void initState() {
     super.initState();
-    _currentProperty = widget.property;
-  }
-
-  //actualiza la instancia de HIVE para poder ver los cambios que se realizan al objeto, esto ayuda a refrescar la UI
-  Future<void> _reloadProperty() async {
-    final box = Hive.box<Property>(Config.boxName);
-    final updated = box.get(_currentProperty.id);
-    if (updated != null) {
-      setState(() {
-        _currentProperty = updated;
-      });
-    }
-  }
-
-  void _deleteProperty() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Delete Property'),
-        content: Text('Are you sure you want to delete "${_currentProperty.name}" and all related data?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      //Borrar archivo de contrato si existe
-      if (_currentProperty.contractFilePath != null) {
-        final contractFile = File(_currentProperty.contractFilePath!);
-        if (await contractFile.exists()) await contractFile.delete();
-      }
-
-      //Borrar todas las fotos de pagos si existen
-      for (final payment in _currentProperty.payments) {
-        if (payment.photoPath != null) {
-          final photoFile = File(payment.photoPath!);
-          if (await photoFile.exists()) await photoFile.delete();
-        }
-      }
-
-      //Eliminar la propiedad de Hive
-      await _currentProperty.delete();
-
-      //Volver a la pantalla anterior
-      if (mounted) Navigator.pop(context);
-    }
-  }
-
-  Future<void> pickContractFile(Property property) async {
-    final typeGroup = XTypeGroup(
-      label: 'Contratos',
-      extensions: ['pdf', 'jpg', 'jpeg', 'png'],
-    );
-
-    final file = await openFile(acceptedTypeGroups: [typeGroup]);
-
-    if (file != null) {
-      final original = File(file.path);
-
-      // Obtener carpeta interna segura
-      final appDir = await getApplicationDocumentsDirectory();
-      final contractsDir = Directory('${appDir.path}/contracts');
-
-      // Crear carpeta si no existe
-      if (!await contractsDir.exists()) {
-        await contractsDir.create(recursive: true);
-      }
-
-      // Crear nuevo archivo con nombre único
-      final fileName = path.basename(file.path); // nombre original
-      final newPath = path.join(contractsDir.path, '${property.id}_$fileName');
-
-      final savedFile = await original.copy(newPath);
-
-      // Guardar la nueva ruta
-      property.contractFilePath = savedFile.path;
-      await property.save();
-    }
-  }
-
-  void openContractFileIfExists(String path) {
-    final file = File(path);
-    if (file.existsSync()) {
-      OpenFile.open(path);
-    } else {
-      print("Archivo no encontrado. Puede haber sido movido o eliminado.");
-    }
-  }
-
-  Future<void> deleteContractFile(Property property) async {
-    final path = property.contractFilePath;
-    if (path != null) {
-      final file = File(path);
-      if (await file.exists()) {
-        await file.delete();
-      }
-      property.contractFilePath = null;
-      await property.save();
-    }
+    selectedYear = DateTime.now().year;
   }
 
   @override
   Widget build(BuildContext context) {
-    final dateFormat = DateFormat.yMMMd();
+    final p = widget.property;
+    final monthlyRent = p.monthlyRent;
+
+    final currentYearBlocks = p.monthlyBlocks
+        .where((b) => b.year == selectedYear)
+        .toList()
+      ..sort((a, b) => a.month.compareTo(b.month));
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_currentProperty.name),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        title: Text(p.name),
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit),
-            tooltip: 'Edit Property',
-            onPressed: () async {
-              final updated = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => AddPropertyScreen(existingProperty: _currentProperty),
-                ),
-              );
-              if (updated != null) await _reloadProperty();
-            },
+            icon: const Icon(Icons.info_outline),
+            tooltip: 'Ver detalles',
+            onPressed: _showPropertyDetailsModal,
           ),
           IconButton(
-            icon: const Icon(Icons.delete),
-            tooltip: 'Delete Property',
-            onPressed: _deleteProperty,
+            icon: const Icon(Icons.edit),
+            tooltip: 'Editar propiedad',
+            onPressed: () async {
+              final originalRent = p.monthlyRent;
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AddPropertyScreen(existingProperty: p),
+                ),
+              );
+              if (mounted) {
+                setState(() {});
+
+                // Compara si el valor cambió
+                if (p.monthlyRent != originalRent) {
+                  await _mostrarDialogoActualizarRenta(context, p, originalRent);
+                }
+              }
+            },
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          ExpansionTile(
-            title: Row(
-              children: const [Text("Property Details")],
+      body: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          padding: const EdgeInsets.all(5),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildYearSelector(),
+                const SizedBox(height: 8),
+                _buildMonthlyGrid(currentYearBlocks, monthlyRent),
+              ],
             ),
-            initiallyExpanded: false,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text("🏠 Property Info", style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    _buildDetailTile("Address", _currentProperty.address),
-                    _buildDetailTile("Monthly Rent", "\$${_currentProperty.monthlyRent.toStringAsFixed(2)}"),
-                    _buildDetailTile("Due Day", "Day ${_currentProperty.dueDay}"),
-                    _buildDetailTile("Start Date", dateFormat.format(_currentProperty.startDate)),
-                    if (_currentProperty.endDate != null)
-                      _buildDetailTile("End Date", dateFormat.format(_currentProperty.endDate!)),
-                    _buildDetailTile("Status", _currentProperty.isActive ? "Active" : "Inactive"),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text("👤 Tenant Info", style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    _buildDetailTile("Name", _currentProperty.tenantName),
-                    _buildDetailTile("Email", _currentProperty.tenantEmail ?? ""),
-                    _buildDetailTile("Phone", _currentProperty.tenantPhone ?? ""),
-                  ],
-                ),
-              ),
-              if (_currentProperty.contractFilePath != null) ...[
-                ListTile(
-                  leading: Icon(Icons.picture_as_pdf),
-                  title: Text("Ver contrato"),
-                  subtitle: Text(_currentProperty.contractFilePath!.split('/').last),
-                  trailing: Icon(Icons.open_in_new),
-                  onTap: () => openContractFileIfExists(_currentProperty.contractFilePath!),
-                ),
-                OverflowBar(
-                  alignment: MainAxisAlignment.start,
-                  spacing: 12.0, // Espacio horizontal entre botones
-                  overflowSpacing: 8.0, // Espacio vertical cuando se hace wrap
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: () async {
-                        await pickContractFile(_currentProperty);
-                        await _reloadProperty(); // <- esto reemplaza el setState
-                      },
-                      icon: Icon(Icons.upload_file),
-                      label: Text("Reemplazar"),
-                    ),
-                    TextButton.icon(
-                      onPressed: () async {
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder: (_) => AlertDialog(
-                            title: Text("¿Eliminar contrato?"),
-                            content: Text("Esta acción no se puede deshacer."),
-                            actions: [
-                              TextButton(onPressed: () => Navigator.pop(context, false), child: Text("Cancelar")),
-                              TextButton(onPressed: () => Navigator.pop(context, true), child: Text("Eliminar")),
-                            ],
-                          ),
-                        );
-                        if (confirm == true) {
-                          await deleteContractFile(_currentProperty);
-                          await _reloadProperty();
-                        }
-                      },
-                      icon: Icon(Icons.delete),
-                      label: Text("Eliminar"),
-                      style: TextButton.styleFrom(foregroundColor: Colors.red),
-                    ),
-                  ],
-                ),
-              ] else ...[
-                ListTile(
-                  leading: Icon(Icons.upload_file),
-                  title: Text("Agregar contrato"),
-                  onTap: () async {
-                    await pickContractFile(_currentProperty);
-                    await _reloadProperty();
-                  }
-                ),
-              ]
-            ],
           ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("Payments", style: Theme.of(context).textTheme.titleLarge),
-              DropdownButton<int>(
-                value: _selectedYear,
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _selectedYear = value);
-                  }
-                },
-                items: List.generate(5, (i) {
-                  final year = DateTime.now().year - i;
-                  return DropdownMenuItem(
-                    value: year,
-                    child: Text(year.toString()),
-                  );
-                }),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: 12,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 1.2,
-            ),
-            itemBuilder: (context, index) {
-              final month = index + 1;
-              Payment? paidPayment;
-              try {
-                paidPayment = _currentProperty.payments.firstWhere(
-                  (p) => p.date.month == month && p.date.year == _selectedYear && p.isPaid,
-                );
-              } catch (_) {
-                paidPayment = null;
-              }
-
-              final paid = paidPayment != null;
-              final hasPhoto = paidPayment?.photoPath?.isNotEmpty == true;
-              final monthName = DateFormat.MMM().format(DateTime(0, month));
-
-              return InkWell(
-                onTap: () async {
-                  final paymentDate = DateTime(_selectedYear, month, _currentProperty.dueDay);
-                  if (paidPayment != null) {
-                    showDialog(
-                      context: context,
-                      builder: (context) {
-                        return AlertDialog(
-                          title: Text("Payment - $monthName $_selectedYear"),
-                          content: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("📅 Date: ${DateFormat.yMMMd().format(paidPayment!.date)}"),
-                              const SizedBox(height: 8),
-                              Text("📝 Comment: ${paidPayment.comment?.isNotEmpty == true ? paidPayment.comment! : "No comment"}"),
-                              const SizedBox(height: 12),
-                              if (hasPhoto)
-                                GestureDetector(
-                                  onTap: () {
-                                    Navigator.of(context).pop();
-                                    showDialog(
-                                      context: context,
-                                      builder: (_) => Dialog(
-                                        child: Image.file(File(paidPayment!.photoPath!)),
-                                      ),
-                                    );
-                                  },
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Text("📸 Photo:"),
-                                      const SizedBox(height: 4),
-                                      Image.file(
-                                        File(paidPayment!.photoPath!),
-                                        height: 100,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ],
-                                  ),
-                                )
-                              else
-                                const Text("📸 No photo uploaded."),
-                            ],
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text("Close"),
-                            ),
-                            TextButton(
-                              onPressed: () async {
-                                Navigator.pop(context);
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => AddPaymentScreen(
-                                      property: _currentProperty,
-                                      preselectedDate: paymentDate,
-                                    ),
-                                  ),
-                                );
-                                await _reloadProperty();
-                              },
-                              child: const Text("Edit"),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                setState(() {
-                                  final removed = _currentProperty.payments.firstWhere(
-                                    (p) => p.date.month == month && p.date.year == _selectedYear,
-                                  );
-
-                                  //Borra la foto asociada si existe
-                                  if (removed.photoPath != null) {
-                                    final file = File(removed.photoPath!);
-                                    if (file.existsSync()) {
-                                      file.delete();
-                                    }
-                                  }
-
-                                  _currentProperty.payments.remove(removed);
-                                  _currentProperty.save();
-                                });
-                                Navigator.pop(context);
-                              },
-                              child: const Text("Delete", style: TextStyle(color: Colors.red)),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  } else {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => AddPaymentScreen(
-                          property: _currentProperty,
-                          preselectedDate: paymentDate,
-                        ),
-                      ),
-                    );
-                    await _reloadProperty();
-                  }
-                },
-                onLongPress: paid
-                    ? () async {
-                        final paymentDate = DateTime(_selectedYear, month, _currentProperty.dueDay);
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => AddPaymentScreen(
-                              property: _currentProperty,
-                              preselectedDate: paymentDate,
-                            ),
-                          ),
-                        );
-                        await _reloadProperty();
-                      }
-                    : null,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: paid ? AppColors.success : Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: paid ? AppColors.success : Colors.grey.shade600),
-                  ),
-                  child: Stack(
-                    children: [
-                      Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(monthName, style: TextStyle(fontWeight: FontWeight.bold, color: paid ? Colors.white : Colors.grey.shade700)),
-                            const SizedBox(height: 4),
-                            Icon(
-                              paid ? Icons.check_circle : Icons.cancel,
-                              color: paid ? Colors.white : Colors.grey.shade700,
-                              size: 24,
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (hasPhoto)
-                        const Positioned(
-                          bottom: 4,
-                          right: 4,
-                          child: Icon(Icons.image, size: 18, color: Colors.white),
-                        ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          )
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildDetailTile(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          Text("$label:", style: const TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(width: 8),
-          Expanded(child: Text(value)),
+  Widget _buildYearSelector() {
+    return Row(
+      children: [
+        const Text('Año: ', style: TextStyle(fontSize: 16)),
+        DropdownButton<int>(
+          value: selectedYear,
+          onChanged: (value) {
+            if (value != null) {
+              setState(() {
+                selectedYear = value;
+              });
+            }
+          },
+          items: List.generate(10, (i) {
+            final year = DateTime.now().year - 5 + i;
+            return DropdownMenuItem(
+              value: year,
+              child: Text(year.toString()),
+            );
+          }),
+        ),
+      ],
+    );
+  }
+
+  void _ensureBlocksForYear(int year) {
+    final existingMonths = widget.property.monthlyBlocks
+        .where((b) => b.year == year)
+        .map((b) => b.month)
+        .toSet();
+
+    final missingMonths = List.generate(12, (i) => i + 1)
+        .where((month) => !existingMonths.contains(month));
+
+    if (missingMonths.isNotEmpty) {
+      for (final month in missingMonths) {
+        widget.property.monthlyBlocks.add(
+          MonthlyRentBlock(
+            year: year,
+            month: month,
+            effectiveRent: widget.property.monthlyRent,
+          ),
+        );
+      }
+      widget.property.save();
+    }
+  }
+
+  Widget _buildMonthlyGrid(List blocks, double monthlyRent) {
+    _ensureBlocksForYear(selectedYear);
+
+    final sortedBlocks = widget.property.monthlyBlocks
+        .where((b) => b.year == selectedYear)
+        .toList()
+      ..sort((a, b) => a.month.compareTo(b.month));
+
+    return GridView.builder(
+      itemCount: sortedBlocks.length,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1,
+      ),
+      itemBuilder: (context, index) {
+        final block = sortedBlocks[index];
+        final total = block.payments.fold(0.0, (sum, p) => sum + p.amount);
+        final monthName = DateFormat.MMM('es').format(DateTime(0, block.month));
+
+        final DateTime today = DateTime.now();
+        final DateTime dueDate = DateTime(block.year, block.month, widget.property.dueDay);
+        final DateTime contractStart = widget.property.startDate;
+
+        final bool isBeforeContract =
+            DateTime(block.year, block.month).isBefore(DateTime(contractStart.year, contractStart.month));
+        final bool isFuture = dueDate.isAfter(today);
+        final bool isPaid = total >= block.effectiveRent;
+        final bool isPartial = total > 0 && total < block.effectiveRent;
+        final bool isUnpaid = total == 0 && !isFuture;
+
+        IconData icon;
+        Color color;
+
+        if (isBeforeContract) {
+          icon = Icons.history; // antes del inicio
+          color = Colors.grey;
+        } else if (isPaid) {
+          icon = Icons.check_circle;
+          color = Colors.green;
+        } else if (isPartial) {
+          icon = Icons.hourglass_bottom;
+          color = Colors.orange;
+        } else if (isUnpaid) {
+          icon = Icons.cancel;
+          color = Colors.red;
+        } else {
+          icon = Icons.calendar_today;
+          color = Colors.blueGrey;
+        }
+
+        final double percentPaid = (total / block.effectiveRent).clamp(0.0, 1.0);
+
+        return GestureDetector(
+          onTap: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => MonthlyBlockDetailScreen(
+                  property: widget.property,
+                  block: block,
+                ),
+              ),
+            );
+            setState(() {});
+          },
+          child: Card(
+            elevation: 3,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            color: isBeforeContract ? Colors.grey.shade200 : null,
+            child: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      monthName.toUpperCase(),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isBeforeContract ? Colors.grey : null,
+                      ),
+                    ),
+                    Icon(icon, color: color, size: 30),
+                    Text(
+                      '${(total / block.effectiveRent * 100).clamp(0, 100).toStringAsFixed(0)}%',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    LinearProgressIndicator(
+                      value: percentPaid,
+                      minHeight: 6,
+                      backgroundColor: Colors.grey.shade300,
+                      valueColor: AlwaysStoppedAnimation<Color>(color),
+                    ),
+                  ],
+                ),
+              ),
+              if (block.maintenanceEntries.isNotEmpty)
+                const Positioned(
+                  top: 4,
+                  right: 4,
+                  child: Icon(Icons.build, size: 16, color: Colors.grey),
+                ),
+            ],
+          ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showPropertyDetailsModal() {
+    final p = widget.property;
+    final formatter = DateFormat.yMMMd('es');
+    final hasContract = p.contractFilePath != null && File(p.contractFilePath!).existsSync();
+    final hasPhotos = p.initialPhotos.isNotEmpty;
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Información de la propiedad', style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 16),
+              Text('🏠 Arrendatario: ${p.tenantName}', style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text('✉️ Correo: ${p.tenantEmail}'),
+              Text('📞 Teléfono: ${p.tenantPhone}'),
+              const SizedBox(height: 8),
+              Text('📍 Dirección: ${p.address}'),
+              Text('💵 Arriendo mensual: \$${p.monthlyRent.toStringAsFixed(0)}'),
+              Text('📆 Día de vencimiento: ${p.dueDay}'),
+              Text('⏳ Inicio contrato: ${formatter.format(p.startDate)}'),
+              if (p.endDate != null)
+                Text('🏁 Fin contrato: ${formatter.format(p.endDate!)}'),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  if (hasContract)
+                    TextButton.icon(
+                      icon: const Icon(Icons.picture_as_pdf),
+                      label: const Text('Ver contrato'),
+                      onPressed: () => OpenFile.open(p.contractFilePath!),
+                    ),
+                  if (hasPhotos)
+                    TextButton.icon(
+                      icon: const Icon(Icons.photo_library),
+                      label: const Text('Ver fotos'),
+                      onPressed: () {
+                        Navigator.of(context).pop(); // cerrar modal antes de abrir otro
+                        showDialog(
+                          context: context,
+                          builder: (_) => Dialog(
+                            child: Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: p.initialPhotos
+                                    .map((path) => Image.file(
+                                          File(path),
+                                          width: 100,
+                                          height: 100,
+                                          fit: BoxFit.cover,
+                                        ))
+                                    .toList(),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _mostrarDialogoActualizarRenta(BuildContext context, Property propiedad, double valorAnterior) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("¿Aplicar nuevo arriendo?"),
+        content: Text(
+          "Has cambiado el valor del arriendo de \$${valorAnterior.toStringAsFixed(0)} a \$${propiedad.monthlyRent.toStringAsFixed(0)}.\n\n"
+          "¿Deseas aplicar este nuevo valor a los meses futuros que aún no están en fecha de pago?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("No"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Sí"),
+          ),
         ],
       ),
     );
+
+    if (confirmar == true) {
+      final hoy = DateTime.now();
+      for (final block in propiedad.monthlyBlocks) {
+        final fechaBloque = DateTime(block.year, block.month, propiedad.dueDay);
+        if (fechaBloque.isAfter(hoy)) {
+          block.effectiveRent = propiedad.monthlyRent;
+        }
+      }
+
+      await propiedad.save();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Nuevo arriendo aplicado a los meses futuros.")),
+        );
+      }
+      setState(() {});
+    }
   }
 }
