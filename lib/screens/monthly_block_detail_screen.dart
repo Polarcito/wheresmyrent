@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:pie_chart/pie_chart.dart';
+import 'package:wheresmyrent/gen_l10n/app_localizations.dart';
 import 'package:wheresmyrent/model/generic/app_theme.dart';
 import 'package:wheresmyrent/model/maintenance_entry.dart';
 import 'package:wheresmyrent/model/property.dart';
@@ -49,10 +50,10 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
         title: Text('${monthLabel[0].toUpperCase()}${monthLabel.substring(1)} ${widget.block.year}'),
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(icon: Icon(Icons.analytics), text: 'Resumen'),
-            Tab(icon: Icon(Icons.payments), text: 'Pagos'),
-            Tab(icon: Icon(Icons.build), text: 'Mantención'),
+          tabs: [
+            Tab(icon: Icon(Icons.analytics), text: AppLocalizations.of(context)!.tab_summary),
+            Tab(icon: Icon(Icons.payments), text: AppLocalizations.of(context)!.tab_payments),
+            Tab(icon: Icon(Icons.build), text: AppLocalizations.of(context)!.tab_maintenance),
           ],
         ),
       ),
@@ -76,10 +77,14 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
     final balanceFinal = totalPagado - montoEsperado + totalMantencion;
 
     final dataMap = <String, double>{
-      if (totalPagado > 0) "Pagado": totalPagado > montoEsperado ? montoEsperado : totalPagado,
-      if (faltaPorPagar > 0) "Faltante": faltaPorPagar,
-      if (excedente > 0) "Excedente": excedente,
-      if (totalMantencion > 0) "Mantención": totalMantencion,
+      if (totalPagado > 0)
+        AppLocalizations.of(context)!.summary_paid: totalPagado > montoEsperado ? montoEsperado : totalPagado,
+      if (faltaPorPagar > 0)
+        AppLocalizations.of(context)!.summary_missing: faltaPorPagar,
+      if (excedente > 0)
+        AppLocalizations.of(context)!.summary_excess: excedente,
+      if (totalMantencion > 0)
+        AppLocalizations.of(context)!.summary_maintenance: totalMantencion,
     };
 
     return SingleChildScrollView(
@@ -104,23 +109,31 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
           ),
           const SizedBox(height: 24),
           _buildResumenEffectiveRentRow(
-            "Monto esperado de arriendo:",
+            AppLocalizations.of(context)!.summary_expectedRent,
             '\$${montoEsperado.toStringAsFixed(0)}',
             _showEditRentDialog,
           ),
-          _buildResumenRow("Total pagado:", '\$${totalPagado.toStringAsFixed(0)}'),
-          const SizedBox(height: 8),
-          _buildResumenRow("Faltante por pagar:", '\$${faltaPorPagar.toStringAsFixed(0)}',
-              color: Colors.red),
-          const SizedBox(height: 8),
-          _buildResumenRow("Excedente:", '\$${excedente.toStringAsFixed(0)}',
-              color: Colors.green),
-          Divider(height: 32, color: Theme.of(context).colorScheme.primary),
-          _buildResumenRow("Gastos de mantención:", '\$${totalMantencion.toStringAsFixed(0)}',
-              color: Colors.orange),
-          Divider(height: 32, color: Theme.of(context).colorScheme.primary),
           _buildResumenRow(
-            "Balance final:",
+            AppLocalizations.of(context)!.summary_totalPaid,
+            '\$${totalPagado.toStringAsFixed(0)}',
+          ),
+          _buildResumenRow(
+            AppLocalizations.of(context)!.summary_amountDue,
+            '\$${faltaPorPagar.toStringAsFixed(0)}',
+            color: Colors.red,
+          ),
+          _buildResumenRow(
+            AppLocalizations.of(context)!.summary_overpayment,
+            '\$${excedente.toStringAsFixed(0)}',
+            color: Colors.green,
+          ),
+          _buildResumenRow(
+            AppLocalizations.of(context)!.summary_maintenanceCosts,
+            '\$${totalMantencion.toStringAsFixed(0)}',
+            color: Colors.orange,
+          ),
+          _buildResumenRow(
+            AppLocalizations.of(context)!.summary_finalBalance,
             '\$${balanceFinal.toStringAsFixed(0)}',
             color: balanceFinal >= 0 ? Colors.green : Colors.red,
           ),
@@ -134,18 +147,14 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                 ElevatedButton.icon(
                   onPressed: _showAddPaymentSheet,
                   icon: const Icon(Icons.payments),
-                  label: const Text("Pago"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                  ),
+                  label: Text(AppLocalizations.of(context)!.summary_addPayment),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
                 ),
                 ElevatedButton.icon(
                   onPressed: _showAddMaintenanceSheet,
                   icon: const Icon(Icons.build_circle),
-                  label: const Text("Mantención"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                  ),
+                  label: Text(AppLocalizations.of(context)!.summary_addMaintenance),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
                 ),
               ],
             ),
@@ -177,7 +186,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
             children: [
               IconButton(
                 icon: Icon(Icons.edit, size: 18, color: Theme.of(context).colorScheme.primary,),
-                tooltip: 'Editar monto esperado',
+                tooltip: AppLocalizations.of(context)!.summary_editExpectedRent,
                 onPressed: onEdit,
                 padding: const EdgeInsets.only(left: 4),
                 constraints: const BoxConstraints(),
@@ -203,10 +212,10 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
         if (payments.isEmpty)
           Center(
             child: Text(
-              "Sin pagos registrados",
+              AppLocalizations.of(context)!.payments_noPayments,
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontSize: 16,
-                color: colorScheme.onSurface.withOpacity(0.7),
+                color: colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
           )
@@ -225,7 +234,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(
-                    color: theme.dividerColor.withOpacity(0.2),
+                    color: theme.dividerColor.withValues(alpha: 0.2),
                   ),
                 ),
                 child: InkWell(
@@ -241,7 +250,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                       children: [
                         CircleAvatar(
                           radius: 24,
-                          backgroundColor: Colors.green.withOpacity(0.1),
+                          backgroundColor: Colors.green.withValues(alpha: 0.1),
                           child: Icon(
                             Icons.attach_money,
                             color: Colors.green.shade600,
@@ -263,14 +272,14 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                               Text(
                                 DateFormat.yMMMd('es').format(p.date),
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  color: colorScheme.onSurface.withOpacity(0.8),
+                                  color: colorScheme.onSurface.withValues(alpha: 0.8),
                                 ),
                               ),
                               if (p.note != null)
                                 Text(
                                   p.note!,
                                   style: theme.textTheme.bodySmall?.copyWith(
-                                    color: colorScheme.onSurface.withOpacity(0.6),
+                                    color: colorScheme.onSurface.withValues(alpha: 0.6),
                                   ),
                                 ),
                             ],
@@ -280,7 +289,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                         Column(
                           children: [
                             if (p.photoPaths.isNotEmpty)
-                              Icon(Icons.image, size: 20, color: colorScheme.outline),
+                              Icon(Icons.image, size: 20, color: colorScheme.secondary),
                             IconButton(
                               icon: Icon(Icons.edit, color: colorScheme.primary),
                               onPressed: () => _showAddPaymentSheet(
@@ -313,7 +322,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
           right: 16,
           child: FloatingActionButton(
             onPressed: _showAddPaymentSheet,
-            tooltip: 'Ingresar pago',
+            tooltip: AppLocalizations.of(context)!.payments_addPayment,
             backgroundColor: colorScheme.primary,
             child: Icon(Icons.add, color: colorScheme.onPrimary),
           ),
@@ -332,10 +341,10 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
         if (entries.isEmpty)
           Center(
             child: Text(
-              "Sin registros de mantención",
+              AppLocalizations.of(context)!.maintenance_noEntries,
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontSize: 16,
-                color: colorScheme.onSurface.withOpacity(0.7),
+                color: colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
           )
@@ -347,7 +356,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
               final m = entries[index];
               final isPositive = m.amount >= 0;
               final amountColor = isPositive ? Colors.green.shade600 : Colors.red.shade600;
-              final avatarBg = isPositive ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1);
+              final avatarBg = isPositive ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1);
 
               return Card(
                 margin: const EdgeInsets.symmetric(vertical: 8),
@@ -357,7 +366,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(
-                    color: theme.dividerColor.withOpacity(0.2),
+                    color: theme.dividerColor.withValues(alpha: 0.2),
                   ),
                 ),
                 child: InkWell(
@@ -395,13 +404,13 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                               Text(
                                 m.description,
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  color: colorScheme.onSurface.withOpacity(0.9),
+                                  color: colorScheme.onSurface.withValues(alpha: 0.9),
                                 ),
                               ),
                               Text(
                                 DateFormat.yMMMd('es').format(m.date),
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  color: colorScheme.onSurface.withOpacity(0.6),
+                                  color: colorScheme.onSurface.withValues(alpha: 0.6),
                                 ),
                               ),
                             ],
@@ -443,7 +452,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
           right: 16,
           child: FloatingActionButton(
             onPressed: _showAddMaintenanceSheet,
-            tooltip: 'Agregar mantención',
+            tooltip: AppLocalizations.of(context)!.maintenance_addEntry,
             backgroundColor: colorScheme.primary,
             child: Icon(Icons.add, color: colorScheme.onPrimary),
           ),
@@ -453,13 +462,13 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
   }
 
   void _showAddPaymentSheet({
-    RentPayment? existingPayment,
-    void Function(RentPayment)? onSave,
+  RentPayment? existingPayment,
+  void Function(RentPayment)? onSave,
   }) {
+    final loc = AppLocalizations.of(context)!;
     final amountController = TextEditingController(
         text: existingPayment?.amount.toStringAsFixed(0) ?? '');
-    final noteController =
-        TextEditingController(text: existingPayment?.note ?? '');
+    final noteController = TextEditingController(text: existingPayment?.note ?? '');
     DateTime selectedDate = existingPayment?.date ?? DateTime.now();
     List<String> selectedPhotos = List.from(existingPayment?.photoPaths ?? []);
 
@@ -483,31 +492,36 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    existingPayment != null ? 'Editar pago' : 'Ingresar pago',
+                    existingPayment != null
+                        ? loc.payment_edit
+                        : loc.payment_add,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: amountController,
                     keyboardType: const TextInputType.numberWithOptions(
                         signed: false, decimal: true),
-                    decoration: const InputDecoration(labelText: 'Monto'),
+                    decoration: InputDecoration(labelText: loc.payment_amountLabel),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: noteController,
-                    decoration: const InputDecoration(labelText: 'Nota'),
+                    decoration: InputDecoration(labelText: loc.payment_noteLabel),
                   ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
                       Text(
-                        'Fecha:',
+                        loc.payment_dateLabel,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
-                        ),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primary
+                                  .withOpacity(0.4),
+                            ),
                       ),
                       TextButton(
                         onPressed: () async {
@@ -523,7 +537,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                             });
                           }
                         },
-                        child: Text(DateFormat.yMMMd('es').format(selectedDate)),
+                        child: Text(DateFormat.yMMMd(Localizations.localeOf(context).languageCode).format(selectedDate)),
                       ),
                     ],
                   ),
@@ -543,14 +557,13 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                             }
                           },
                           icon: const Icon(Icons.photo_library),
-                          label: const Text('Galería'),
+                          label: Text(loc.payment_galleryButton),
                         ),
                         const SizedBox(width: 8),
                         ElevatedButton.icon(
                           onPressed: () async {
                             final picker = ImagePicker();
-                            final image =
-                                await picker.pickImage(source: ImageSource.camera);
+                            final image = await picker.pickImage(source: ImageSource.camera);
                             if (image != null) {
                               setModalState(() {
                                 selectedPhotos.add(image.path);
@@ -558,7 +571,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                             }
                           },
                           icon: const Icon(Icons.camera_alt),
-                          label: const Text('Cámara'),
+                          label: Text(loc.payment_cameraButton),
                         ),
                       ],
                     ),
@@ -633,7 +646,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                       Navigator.pop(context);
                     },
                     icon: const Icon(Icons.check),
-                    label: const Text('Guardar pago'),
+                    label: Text(loc.payment_saveButton),
                   ),
                   const SizedBox(height: 24),
                 ],
@@ -649,6 +662,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
     MaintenanceEntry? existingEntry,
     void Function(MaintenanceEntry)? onSave,
   }) {
+    final loc = AppLocalizations.of(context)!;
     final descriptionController = TextEditingController(
       text: existingEntry?.description ?? '',
     );
@@ -679,34 +693,36 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                 children: [
                   Text(
                     existingEntry != null
-                        ? 'Editar mantención'
-                        : 'Ingresar mantención',
+                        ? loc.maintenance_edit
+                        : loc.maintenance_add,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: descriptionController,
-                    decoration:
-                        const InputDecoration(labelText: 'Descripción'),
+                    decoration: InputDecoration(labelText: loc.maintenance_descriptionLabel),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: amountController,
                     keyboardType: const TextInputType.numberWithOptions(
                         signed: true, decimal: true),
-                    decoration: const InputDecoration(
-                        labelText: 'Monto (+ ingreso, – gasto)'),
+                    decoration: InputDecoration(
+                        labelText: loc.maintenance_amountLabel),
                   ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
                       Text(
-                        'Fecha:',
+                        loc.maintenance_dateLabel,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
-                        ),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primary
+                                  .withOpacity(0.4),
+                            ),
                       ),
                       TextButton(
                         onPressed: () async {
@@ -720,7 +736,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                             setModalState(() => selectedDate = picked);
                           }
                         },
-                        child: Text(DateFormat.yMMMd('es').format(selectedDate)),
+                        child: Text(DateFormat.yMMMd(Localizations.localeOf(context).languageCode).format(selectedDate)),
                       ),
                     ],
                   ),
@@ -740,7 +756,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                             }
                           },
                           icon: const Icon(Icons.photo_library),
-                          label: const Text('Galería'),
+                          label: Text(loc.maintenance_galleryButton),
                         ),
                         const SizedBox(width: 8),
                         ElevatedButton.icon(
@@ -753,7 +769,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                             }
                           },
                           icon: const Icon(Icons.camera_alt),
-                          label: const Text('Cámara'),
+                          label: Text(loc.maintenance_cameraButton),
                         ),
                       ],
                     ),
@@ -830,7 +846,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                       Navigator.pop(context);
                     },
                     icon: const Icon(Icons.check),
-                    label: const Text('Guardar mantención'),
+                    label: Text(loc.maintenance_saveButton),
                   ),
                   const SizedBox(height: 24),
                 ],
@@ -859,15 +875,17 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
   }
 
   void _deletePayment(RentPayment payment) {
+    final loc = AppLocalizations.of(context)!;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('¿Eliminar pago?'),
-        content: const Text('Esta acción no se puede deshacer.'),
+        title: Text(loc.payment_deleteTitle),
+        content: Text(loc.payment_deleteMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
+            child: Text(loc.payment_cancelButton),
           ),
           TextButton(
             onPressed: () {
@@ -877,7 +895,10 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
               });
               Navigator.pop(context);
             },
-            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+            child: Text(
+              loc.payment_confirmDeleteButton,
+              style: const TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -885,15 +906,17 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
   }
 
   void _deleteMaintenance(MaintenanceEntry m) {
+    final loc = AppLocalizations.of(context)!;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('¿Eliminar registro de mantención?'),
-        content: const Text('Esta acción no se puede deshacer.'),
+        title: Text(loc.maintenance_deleteTitle),
+        content: Text(loc.maintenance_deleteMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
+            child: Text(loc.maintenance_cancelButton),
           ),
           TextButton(
             onPressed: () {
@@ -903,8 +926,10 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
               });
               Navigator.pop(context);
             },
-            child:
-                const Text('Eliminar', style: TextStyle(color: Colors.red)),
+            child: Text(
+              loc.maintenance_confirmDeleteButton,
+              style: const TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -1020,24 +1045,25 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
   }
 
   void _showEditRentDialog() {
+    final loc = AppLocalizations.of(context)!;
     final controller = TextEditingController(text: widget.block.effectiveRent.toStringAsFixed(0));
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Editar monto esperado'),
+        title: Text(loc.editRentDialog_title),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'Nuevo monto',
+          decoration: InputDecoration(
+            labelText: loc.editRentDialog_label,
             prefixText: '\$',
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
+            child: Text(loc.common_cancel),
           ),
           ElevatedButton(
             onPressed: () {
@@ -1045,12 +1071,12 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
               if (newRent != null) {
                 setState(() {
                   widget.block.effectiveRent = newRent;
-                  widget.property.save(); // Guarda en Hive
+                  widget.property.save();
                 });
                 Navigator.pop(context);
               }
             },
-            child: const Text('Guardar'),
+            child: Text(loc.common_save),
           ),
         ],
       ),

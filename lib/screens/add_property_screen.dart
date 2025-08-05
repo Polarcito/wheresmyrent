@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:wheresmyrent/gen_l10n/app_localizations.dart';
 import 'package:wheresmyrent/model/property.dart';
 import 'package:uuid/uuid.dart';
 
@@ -23,18 +24,15 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
 
   final _formKeys = List.generate(3, (_) => GlobalKey<FormState>());
 
-  // Step 1
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _rentController = TextEditingController();
   DateTime? _startDate;
 
-  // Step 2
   final TextEditingController _tenantNameController = TextEditingController();
   final TextEditingController _tenantEmailController = TextEditingController();
   final TextEditingController _tenantPhoneController = TextEditingController();
 
-  // Step 3
   String? _contractFilePath;
   List<String> _initialPhotos = [];
 
@@ -50,11 +48,9 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
       _rentController.text = p.monthlyRent.toString();
       _selectedDueDay = p.dueDay;
       _startDate = p.startDate;
-
       _tenantNameController.text = p.tenantName;
       _tenantEmailController.text = p.tenantEmail;
       _tenantPhoneController.text = p.tenantPhone;
-
       _contractFilePath = p.contractFilePath;
       _initialPhotos = List<String>.from(p.initialPhotos);
     }
@@ -126,7 +122,6 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
       property.tenantPhone = _tenantPhoneController.text;
       property.contractFilePath = _contractFilePath;
       property.initialPhotos = _initialPhotos;
-
       await property.save();
     } else {
       final property = Property(
@@ -142,15 +137,15 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
         contractFilePath: _contractFilePath,
         initialPhotos: _initialPhotos,
       );
-
       final box = Hive.box<Property>('properties');
       await box.put(property.id, property);
     }
 
     if (!mounted) return;
+    final loc = AppLocalizations.of(context)!;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(isEditing ? 'Propiedad actualizada' : 'Propiedad guardada'),
+        content: Text(isEditing ? loc.addProperty_updated : loc.addProperty_saved),
       ),
     );
     Navigator.pop(context);
@@ -158,15 +153,12 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final steps = [
-      _buildStep1(),
-      _buildStep2(),
-      _buildStep3(),
-    ];
+    final loc = AppLocalizations.of(context)!;
+    final steps = [_buildStep1(loc), _buildStep2(loc), _buildStep3(loc)];
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Agregar Propiedad'),
+        title: Text(widget.existingProperty != null ? loc.addProperty_updated : loc.addProperty_title),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -183,13 +175,13 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
                   if (currentStep > 0)
                     TextButton(
                       onPressed: _previousStep,
-                      child: const Text('Volver'),
+                      child: Text(loc.addProperty_button_back),
                     )
                   else
-                    const Spacer(), // empuja el botón derecho cuando no hay "Volver"
+                    const Spacer(),
                   ElevatedButton(
                     onPressed: _nextStep,
-                    child: Text(currentStep < 2 ? 'Siguiente' : 'Guardar'),
+                    child: Text(currentStep < 2 ? loc.addProperty_button_next : loc.addProperty_button_save),
                   ),
                 ],
               )
@@ -200,64 +192,52 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
     );
   }
 
-  Widget _buildStep1() {
+  Widget _buildStep1(AppLocalizations loc) {
     return ListView(
       children: [
         TextFormField(
           controller: _nameController,
-          decoration: const InputDecoration(labelText: 'Nombre de la propiedad'),
-          validator: (value) => value!.isEmpty ? 'Este campo es obligatorio' : null,
+          decoration: InputDecoration(labelText: loc.addProperty_step1_name),
+          validator: (value) => value!.isEmpty ? loc.addProperty_required : null,
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _addressController,
-          decoration: const InputDecoration(labelText: 'Dirección'),
-          validator: (value) => value!.isEmpty ? 'Este campo es obligatorio' : null,
+          decoration: InputDecoration(labelText: loc.addProperty_step1_address),
+          validator: (value) => value!.isEmpty ? loc.addProperty_required : null,
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _rentController,
           keyboardType: TextInputType.number,
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'^[0-9]*[.,]?[0-9]*$')),
-          ],
-          decoration: const InputDecoration(labelText: 'Arriendo mensual'),
+          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^[0-9]*[.,]?[0-9]*$'))],
+          decoration: InputDecoration(labelText: loc.addProperty_step1_rent),
           validator: (value) {
-            if (value == null || value.isEmpty) return 'Campo obligatorio';
-
-            // Reemplazar coma por punto si el usuario escribe con coma decimal
+            if (value == null || value.isEmpty) return loc.addProperty_required_field;
             final normalized = value.replaceAll(',', '.');
-
             final parsed = double.tryParse(normalized);
-            if (parsed == null) return 'Ingresa un número válido';
-            return null;
+            return parsed == null ? loc.addProperty_invalidNumber : null;
           },
         ),
         const SizedBox(height: 16),
         DropdownButtonFormField<int>(
           value: _selectedDueDay,
-          decoration: const InputDecoration(labelText: 'Día de vencimiento'),
+          decoration: InputDecoration(labelText: loc.addProperty_step1_dueDay),
           items: List.generate(31, (index) {
             final day = index + 1;
-            return DropdownMenuItem(
-              value: day,
-              child: Text(day.toString()),
-            );
+            return DropdownMenuItem(value: day, child: Text(day.toString()));
           }),
           onChanged: (value) {
             setState(() {
               _selectedDueDay = value;
             });
           },
-          validator: (value) =>
-              value == null ? 'Selecciona un día de vencimiento' : null,
+          validator: (value) => value == null ? loc.addProperty_selectDueDay : null,
         ),
         const SizedBox(height: 16),
         Text(
-          'Fecha de inicio del contrato:',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: Theme.of(context).colorScheme.primary,
-          ),
+          loc.addProperty_step1_startDate,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary),
         ),
         Row(
           children: [
@@ -265,7 +245,7 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
               child: Text(
                 _startDate != null
                     ? '📅 ${DateFormat.yMMMd().format(_startDate!)}'
-                    : 'Fecha no seleccionada',
+                    : loc.addProperty_step1_startDateNotSelected,
                 style: TextStyle(
                   fontSize: 16,
                   color: _startDate != null
@@ -277,7 +257,7 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
             IconButton(
               onPressed: _pickStartDate,
               icon: const Icon(Icons.calendar_today),
-              tooltip: 'Seleccionar fecha',
+              tooltip: loc.addProperty_step1_selectDate,
               color: Theme.of(context).colorScheme.primary,
             ),
           ],
@@ -286,57 +266,59 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
     );
   }
 
-  Widget _buildStep2() {
+  Widget _buildStep2(AppLocalizations loc) {
     return ListView(
       children: [
         TextFormField(
           controller: _tenantNameController,
-          decoration: const InputDecoration(labelText: 'Nombre del arrendatario'),
-          validator: (value) => value!.isEmpty ? 'Este campo es obligatorio' : null,
+          decoration: InputDecoration(labelText: loc.addProperty_step2_tenantName),
+          validator: (value) => value!.isEmpty ? loc.addProperty_required : null,
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _tenantEmailController,
-          decoration: const InputDecoration(labelText: 'Correo electrónico'),
+          decoration: InputDecoration(labelText: loc.addProperty_step2_tenantEmail),
           validator: (value) {
-            if (value == null || value.isEmpty) return 'Obligatorio';
+            if (value == null || value.isEmpty) return loc.addProperty_required;
             final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-            return emailRegex.hasMatch(value) ? null : 'Correo no válido';
+            return emailRegex.hasMatch(value) ? null : loc.addProperty_invalidEmail;
           },
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _tenantPhoneController,
-          decoration: const InputDecoration(labelText: 'Teléfono'),
-          validator: (value) => value!.isEmpty ? 'Este campo es obligatorio' : null,
+          decoration: InputDecoration(labelText: loc.addProperty_step2_tenantPhone),
+          validator: (value) => value!.isEmpty ? loc.addProperty_required : null,
         ),
       ],
     );
   }
 
-  Widget _buildStep3() {
+  Widget _buildStep3(AppLocalizations loc) {
     return ListView(
       children: [
         Text(
-          'Archivo de contrato (opcional)',
+          loc.addProperty_step3_contractFile,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             color: Theme.of(context).colorScheme.primary,
           ),
         ),
         TextButton(
           onPressed: _pickContractFile,
-          child: Text(_contractFilePath != null ? '📄 Archivo seleccionado' : 'Seleccionar archivo'),
+          child: Text(_contractFilePath != null
+              ? loc.addProperty_step3_fileSelected
+              : loc.addProperty_step3_selectFile),
         ),
         const SizedBox(height: 16),
         Text(
-          'Fotos iniciales del inmueble (opcional)',
+          loc.addProperty_step3_initialPhotos,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             color: Theme.of(context).colorScheme.primary,
           ),
         ),
         TextButton(
           onPressed: _pickInitialPhotos,
-          child: const Text('Seleccionar fotos'),
+          child: Text(loc.addProperty_step3_selectPhotos),
         ),
         Wrap(
           spacing: 8,

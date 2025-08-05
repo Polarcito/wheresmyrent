@@ -4,6 +4,7 @@ import 'package:hive_flutter/adapters.dart';
 import 'package:wheresmyrent/gen_l10n/app_localizations.dart';
 import 'package:wheresmyrent/model/generic/app_theme.dart';
 import 'package:wheresmyrent/model/generic/config.dart';
+import 'package:wheresmyrent/model/generic/locale_notifier.dart';
 import 'package:wheresmyrent/model/generic/theme_notifier.dart';
 import 'package:wheresmyrent/model/maintenance_entry.dart';
 import 'package:wheresmyrent/model/monthly_rent_block.dart';
@@ -14,9 +15,11 @@ import 'package:wheresmyrent/screens/pin_setup_screen.dart';
 import 'package:wheresmyrent/services/auth_service.dart';
 
 late final ThemeNotifier themeNotifier;
+late final LocaleNotifier localeNotifier;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  localeNotifier = LocaleNotifier();
   themeNotifier = ThemeNotifier();
   await themeNotifier.loadTheme();
 
@@ -60,25 +63,40 @@ class _MyAppState extends State<MyApp> {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeNotifier,
       builder: (context, mode, _) {
-        return MaterialApp(
-          title: 'Where’s My Rent?',
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: const [
-            Locale('en'),
-            Locale('es'),
-          ],
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: mode,
-          home: _startScreen ??
-            const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            ),
+        return ValueListenableBuilder<Locale>(
+          valueListenable: localeNotifier,
+          builder: (context, locale, _) {
+            return MaterialApp(
+              title: 'Where’s My Rent?',
+              locale: locale,
+              localizationsDelegates: const [
+                AppLocalizations.delegate,
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              supportedLocales: const [
+                Locale('en'),
+                Locale('es'),
+              ],
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: ThemeMode.light, // Puedes volver a activar esto
+              home: FutureBuilder<bool>(
+                future: AuthService().isPinSaved(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Scaffold(
+                      body: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  return snapshot.data!
+                      ? const PinLoginScreen()
+                      : const PinSetupScreen();
+                },
+              ),
+            );
+          },
         );
       },
     );

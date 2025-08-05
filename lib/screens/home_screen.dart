@@ -52,11 +52,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
-        title: Text("Where’s My Rent?", style: const TextStyle(color: Colors.white)),
+        title: Text(loc.title, style: const TextStyle(color: Colors.white)),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -205,7 +203,7 @@ class _HomeScreenState extends State<HomeScreen> {
               _showThemeSelector();
             },
             backgroundColor: AppColors.secondary,
-            tooltip: "Configuración",
+            tooltip: loc.tooltip_settings,
             child: const Icon(Icons.settings, color: Colors.white),
           ),
 
@@ -244,16 +242,17 @@ class _HomeScreenState extends State<HomeScreen> {
   String getRentStatusLabel(Property property) {
     final currentMonthBlock = property.getBlockFor(DateTime.now());
     final status = currentMonthBlock?.getPaymentStatus();
+    final loc = AppLocalizations.of(context)!;
 
     switch (status) {
       case 'paid':
-        return 'Pagado';
+        return loc.rentStatus_paid;
       case 'partial':
-        return 'Pago parcial';
+        return loc.rentStatus_partial;
       case 'unpaid':
-        return 'Pendiente';
+        return loc.rentStatus_unpaid;
       default:
-        return 'Sin datos';
+        return loc.rentStatus_unknown;
     }
   }
 
@@ -265,35 +264,43 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       builder: (context) {
         final theme = Theme.of(context);
+        final loc = AppLocalizations.of(context)!;
 
         return Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text("Seleccionar tema", style: theme.textTheme.titleLarge),
-              const SizedBox(height: 16),
+              Text(
+                loc.settings_title,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 24),
               ListTile(
-                leading: const Icon(Icons.light_mode),
-                title: const Text('Claro'),
+                leading: const Text("🇪🇸", style: TextStyle(fontSize: 24)),
+                title: Text(
+                  loc.language_spanish, 
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: theme.colorScheme.primary,
+                  )),
                 onTap: () {
-                  themeNotifier.setTheme(ThemeMode.light);
+                  localeNotifier.setLocale(const Locale('es'));
+                  setState(() {}); // fuerza reconstrucción del widget
                   Navigator.pop(context);
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.dark_mode),
-                title: const Text('Oscuro'),
+                leading: const Text("🇬🇧", style: TextStyle(fontSize: 24)),
+                title: Text(
+                  loc.language_english,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: theme.colorScheme.primary,
+                  )),
                 onTap: () {
-                  themeNotifier.setTheme(ThemeMode.dark);
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.brightness_auto),
-                title: const Text('Sistema'),
-                onTap: () {
-                  themeNotifier.setTheme(ThemeMode.system);
+                  localeNotifier.setLocale(const Locale('en'));
+                  setState(() {}); // fuerza reconstrucción del widget
                   Navigator.pop(context);
                 },
               ),

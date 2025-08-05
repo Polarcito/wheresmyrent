@@ -11,13 +11,13 @@ class AppColors {
   static const Color onBackground = Colors.black87;
   static const Color onSurface = Colors.black87;
 
-  // Colores oscuros
-  static const Color primaryDark = Color(0xFF60A5FA);   // Azul más suave
-  static const Color secondaryDark = Color(0xFFFCD34D); // Amarillo claro
-  static const Color backgroundDark = Color(0xFF111827);
-  static const Color surfaceDark = Color(0xFF1F2937);
-  static const Color onPrimaryDark = Colors.black;
-  static const Color onSecondaryDark = Colors.black;
+  // Colores oscuros emparejados
+  static const Color primaryDark = Color(0xFF1D4ED8);   // Azul oscuro emparejado con primary
+  static const Color secondaryDark = Color(0xFF3B82F6); // Mismo secondary, sirve en ambos modos
+  static const Color backgroundDark = Color(0xFF0F172A); // Azul-gris muy oscuro (mejor que negro puro)
+  static const Color surfaceDark = Color(0xFF1E293B);   // Azul-gris medio, para tarjetas
+  static const Color onPrimaryDark = Colors.white;
+  static const Color onSecondaryDark = Colors.white70;
   static const Color onBackgroundDark = Colors.white70;
   static const Color onSurfaceDark = Colors.white70;
 }
@@ -57,7 +57,6 @@ class AppTheme {
       backgroundColor: AppColors.primary,
       foregroundColor: AppColors.onPrimary,
       titleTextStyle: TextStyle(
-        color: AppColors.onPrimary,
         fontSize: 20,
         fontWeight: FontWeight.bold,
       ),
@@ -157,7 +156,6 @@ class AppTheme {
       backgroundColor: AppColors.primaryDark,
       foregroundColor: AppColors.onPrimaryDark,
       titleTextStyle: TextStyle(
-        color: AppColors.onPrimaryDark,
         fontSize: 20,
         fontWeight: FontWeight.bold,
       ),
@@ -206,12 +204,12 @@ class AppTheme {
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: AppColors.surface,
+      fillColor: AppColors.surfaceDark,
       contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
         borderSide: BorderSide(
-          color: AppColors.primaryDark.withValues(alpha: 0.4), // borde sutil azul
+          color: AppColors.primaryDark.withOpacity(0.4), // borde sutil azul
         ),
       ),
       focusedBorder: OutlineInputBorder(

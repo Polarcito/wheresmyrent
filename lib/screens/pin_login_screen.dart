@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:wheresmyrent/gen_l10n/app_localizations.dart';
-import 'package:wheresmyrent/model/generic/app_theme.dart';
 import '../services/auth_service.dart';
 import 'home_screen.dart';
 
@@ -33,7 +32,6 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
     }
   }
 
-
   @override
   void dispose() {
     _pinController.dispose();
@@ -44,11 +42,8 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
-        title: Text(
-            AppLocalizations.of(context)!.login_enterPin,
-            style: TextStyle(color: Colors.white),
-          )
+        title: Text(AppLocalizations.of(context)!.login_enterPin),
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
