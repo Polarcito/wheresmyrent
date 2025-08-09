@@ -149,6 +149,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addProperty_invalidNumber => 'Enter a valid number';
 
   @override
+  String get addProperty_invalidPhone => 'Invalid phone number.';
+
+  @override
   String get addProperty_selectDueDay => 'Select a due day';
 
   @override
@@ -303,4 +306,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tab_maintenance => 'Maintenance';
+
+  @override
+  String get notification_title => 'Unpaid rent';
+
+  @override
+  String notification_body(Object property) {
+    return 'The property \"$property\" hasn\'t been fully paid yet.';
+  }
+
+  @override
+  String get notification_channel_name => 'Rent reminder';
+
+  @override
+  String get notification_channel_description => 'Notifies when a rent is overdue and unpaid';
 }

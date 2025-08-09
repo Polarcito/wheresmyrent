@@ -10,6 +10,8 @@ import 'package:wheresmyrent/model/maintenance_entry.dart';
 import 'package:wheresmyrent/model/monthly_rent_block.dart';
 import 'package:wheresmyrent/model/property.dart';
 import 'package:wheresmyrent/model/rent_payment.dart';
+import 'package:wheresmyrent/model/services/notification_service.dart';
+import 'package:wheresmyrent/model/services/translation_service.dart';
 import 'package:wheresmyrent/screens/pin_login_screen.dart';
 import 'package:wheresmyrent/screens/pin_setup_screen.dart';
 import 'package:wheresmyrent/services/auth_service.dart';
@@ -19,18 +21,34 @@ late final LocaleNotifier localeNotifier;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Inicializa servicios persistentes primero
+  await Hive.initFlutter();
+
+  // Configura notifiers antes del resto
   localeNotifier = LocaleNotifier();
+  await localeNotifier.loadLocale();
+
   themeNotifier = ThemeNotifier();
   await themeNotifier.loadTheme();
 
-  // Inicializa Hive y abre el box
-  await Hive.initFlutter();
+  // Traducciones (basadas en SharedPreferences, después de cargar locale)
+  await TranslationService.init();
+
+  // Registro de adaptadores Hive
   Hive.registerAdapter(PropertyAdapter());
   Hive.registerAdapter(MonthlyRentBlockAdapter());
   Hive.registerAdapter(RentPaymentAdapter());
   Hive.registerAdapter(MaintenanceEntryAdapter());
+
+  await NotificationService.requestNotificationPermissionIfNeeded();
+
+  // Abre box de Hive
   await Hive.openBox<Property>(Config.boxName);
-  
+
+  // Notificaciones
+  await NotificationService.initialize();
+
+  // Lanzar la app
   runApp(const MyApp());
 }
 
@@ -48,6 +66,9 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _loadStartScreen();
+
+    // Lanza notificaciones diarias si corresponde
+    NotificationService.scheduleDailyOverdueRentNotifications();
   }
 
   void _loadStartScreen() async {

@@ -44,29 +44,52 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.login_enterPin),
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: _pinController,
-              obscureText: true,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: "PIN"),
-              onSubmitted: (_) => _validatePin(),
+      ),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Logo adaptado al alto y ancho de la pantalla
+          Expanded(
+            flex: 3,
+            child: Center(
+              child: Image.asset(
+                'assets/logo/logo_text.png',
+                fit: BoxFit.contain,
+                width: double.infinity,
+              ),
             ),
-            const SizedBox(height: 16),
-            if (_errorText != null)
-              Text(_errorText!, style: const TextStyle(color: Colors.red)),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _validatePin,
-              child: Text(AppLocalizations.of(context)!.login_unlock),
+          ),
+
+          Expanded(
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextField(
+                    controller: _pinController,
+                    obscureText: true,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: "PIN"),
+                    onSubmitted: (_) => _validatePin(),
+                  ),
+                  const SizedBox(height: 16),
+
+                  if (_errorText != null)
+                    Text(_errorText!, style: const TextStyle(color: Colors.red)),
+
+                  const SizedBox(height: 24),
+
+                  ElevatedButton(
+                    onPressed: _validatePin,
+                    child: Text(AppLocalizations.of(context)!.login_unlock),
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

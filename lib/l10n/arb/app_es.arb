@@ -65,6 +65,7 @@
   "addProperty_required": "Este campo es obligatorio",
   "addProperty_required_field": "Campo obligatorio",
   "addProperty_invalidNumber": "Ingresa un número válido",
+  "addProperty_invalidPhone": "Número de teléfono no válido.",
   "addProperty_selectDueDay": "Selecciona un día de vencimiento",
   "addProperty_invalidEmail": "Correo no válido",
 
@@ -118,5 +119,11 @@
   "common_save": "Guardar",
   "tab_summary": "Resumen",
   "tab_payments": "Pagos",
-  "tab_maintenance": "Mantención"
+  "tab_maintenance": "Mantención",
+
+  "notification_title": "Arriendo pendiente",
+  "notification_body": "La propiedad \"{property}\" aún no ha sido pagada completamente.",
+  "notification_channel_name": "Recordatorio de arriendo",
+  "notification_channel_description": "Notifica cuando un arriendo no ha sido pagado después del vencimiento"
+
 }

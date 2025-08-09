@@ -62,6 +62,18 @@ class _HomeScreenState extends State<HomeScreen> {
             tooltip: loc.home_Logout,
             color: Colors.white,
           ),
+          /*
+          IconButton(
+            icon: const Icon(Icons.notifications_active),
+            tooltip: 'Test Notificación',
+            onPressed: () {
+              NotificationService.testImmediateNotification();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Notificación programada para 10s')),
+              );
+            },
+          ),
+          */
         ],
       ),
       body: ValueListenableBuilder(

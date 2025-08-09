@@ -65,6 +65,7 @@
   "addProperty_required": "This field is required",
   "addProperty_required_field": "Required field",
   "addProperty_invalidNumber": "Enter a valid number",
+  "addProperty_invalidPhone": "Invalid phone number.",
   "addProperty_selectDueDay": "Select a due day",
   "addProperty_invalidEmail": "Invalid email",
 
@@ -118,5 +119,11 @@
   "common_save": "Save",
   "tab_summary": "Summary",
   "tab_payments": "Payments",
-  "tab_maintenance": "Maintenance"
+  "tab_maintenance": "Maintenance",
+
+  "notification_title": "Unpaid rent",
+  "notification_body": "The property \"{property}\" hasn't been fully paid yet.",
+  "notification_channel_name": "Rent reminder",
+  "notification_channel_description": "Notifies when a rent is overdue and unpaid"
+
 }

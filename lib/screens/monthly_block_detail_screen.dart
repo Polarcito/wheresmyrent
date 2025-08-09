@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:pie_chart/pie_chart.dart';
+import 'package:uuid/uuid.dart';
 import 'package:wheresmyrent/gen_l10n/app_localizations.dart';
 import 'package:wheresmyrent/model/generic/app_theme.dart';
 import 'package:wheresmyrent/model/maintenance_entry.dart';
 import 'package:wheresmyrent/model/property.dart';
 import 'package:wheresmyrent/model/monthly_rent_block.dart';
 import 'package:wheresmyrent/model/rent_payment.dart';
+import 'package:wheresmyrent/model/services/file_storage_service.dart';
 
 class MonthlyBlockDetailScreen extends StatefulWidget {
   final Property property;
@@ -420,7 +422,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                         Column(
                           children: [
                             if (m.photoPaths.isNotEmpty)
-                              Icon(Icons.image, size: 20, color: colorScheme.outline),
+                              Icon(Icons.image, size: 20, color: colorScheme.secondary),
                             IconButton(
                               icon: Icon(Icons.edit, color: colorScheme.primary),
                               onPressed: () => _showAddMaintenanceSheet(
@@ -462,15 +464,23 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
   }
 
   void _showAddPaymentSheet({
-  RentPayment? existingPayment,
-  void Function(RentPayment)? onSave,
+    RentPayment? existingPayment,
+    void Function(RentPayment)? onSave,
   }) {
     final loc = AppLocalizations.of(context)!;
+
+    // ID del pago: usa el existente o genera uno nuevo
+    final paymentId = existingPayment?.id ?? const Uuid().v4();
+    final baseSubdir = 'properties/${widget.property.id}/payments/$paymentId';
+
     final amountController = TextEditingController(
-        text: existingPayment?.amount.toStringAsFixed(0) ?? '');
+      text: existingPayment?.amount.toStringAsFixed(0) ?? '',
+    );
     final noteController = TextEditingController(text: existingPayment?.note ?? '');
     DateTime selectedDate = existingPayment?.date ?? DateTime.now();
     List<String> selectedPhotos = List.from(existingPayment?.photoPaths ?? []);
+
+    bool _clearedOnce = false; // para “pisar” en edición
 
     showModalBottomSheet(
       context: context,
@@ -492,9 +502,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    existingPayment != null
-                        ? loc.payment_edit
-                        : loc.payment_add,
+                    existingPayment != null ? loc.payment_edit : loc.payment_add,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: Theme.of(context).colorScheme.primary,
                         ),
@@ -503,7 +511,8 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                   TextField(
                     controller: amountController,
                     keyboardType: const TextInputType.numberWithOptions(
-                        signed: false, decimal: true),
+                      signed: false, decimal: true,
+                    ),
                     decoration: InputDecoration(labelText: loc.payment_amountLabel),
                   ),
                   const SizedBox(height: 8),
@@ -517,10 +526,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                       Text(
                         loc.payment_dateLabel,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .primary
-                                  .withOpacity(0.4),
+                              color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
                             ),
                       ),
                       TextButton(
@@ -532,16 +538,19 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                             lastDate: DateTime(2100),
                           );
                           if (picked != null) {
-                            setModalState(() {
-                              selectedDate = picked;
-                            });
+                            setModalState(() => selectedDate = picked);
                           }
                         },
-                        child: Text(DateFormat.yMMMd(Localizations.localeOf(context).languageCode).format(selectedDate)),
+                        child: Text(
+                          DateFormat.yMMMd(Localizations.localeOf(context).languageCode)
+                              .format(selectedDate),
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
+
+                  // Botones: galería y cámara
                   Center(
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -551,9 +560,18 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                             final picker = ImagePicker();
                             final images = await picker.pickMultiImage();
                             if (images.isNotEmpty) {
-                              setModalState(() {
-                                selectedPhotos.addAll(images.map((e) => e.path));
-                              });
+                              if (existingPayment != null && !_clearedOnce) {
+                                await FileStorageService.deleteAppSubdirRecursively(baseSubdir); // pisar
+                                selectedPhotos.clear();
+                                _clearedOnce = true;
+                              }
+                              final saved = await Future.wait(images.map(
+                                (x) => FileStorageService.copyXFileToAppStorage(
+                                  x,
+                                  subdir: baseSubdir,
+                                ),
+                              ));
+                              setModalState(() => selectedPhotos.addAll(saved));
                             }
                           },
                           icon: const Icon(Icons.photo_library),
@@ -565,9 +583,16 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                             final picker = ImagePicker();
                             final image = await picker.pickImage(source: ImageSource.camera);
                             if (image != null) {
-                              setModalState(() {
-                                selectedPhotos.add(image.path);
-                              });
+                              if (existingPayment != null && !_clearedOnce) {
+                                await FileStorageService.deleteAppSubdirRecursively(baseSubdir); // pisar
+                                selectedPhotos.clear();
+                                _clearedOnce = true;
+                              }
+                              final saved = await FileStorageService.copyXFileToAppStorage(
+                                image,
+                                subdir: baseSubdir,
+                              );
+                              setModalState(() => selectedPhotos.add(saved));
                             }
                           },
                           icon: const Icon(Icons.camera_alt),
@@ -576,68 +601,74 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                       ],
                     ),
                   ),
+
                   const SizedBox(height: 8),
+
+                  // Thumbnails + eliminar
                   if (selectedPhotos.isNotEmpty)
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: selectedPhotos
-                          .map((path) => Stack(
-                                children: [
-                                  GestureDetector(
-                                    onTap: () => _showFullScreenImage(path),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Image.file(
-                                        File(path),
-                                        width: 80,
-                                        height: 80,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    top: 0,
-                                    right: 0,
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        setModalState(() {
-                                          selectedPhotos.remove(path);
-                                        });
-                                      },
-                                      child: const CircleAvatar(
-                                        radius: 10,
-                                        backgroundColor: Colors.black54,
-                                        child: Icon(Icons.close,
-                                            size: 14, color: Colors.white),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ))
-                          .toList(),
+                      children: selectedPhotos.map((path) {
+                        return Stack(
+                          children: [
+                            GestureDetector(
+                              onTap: () => _showFullScreenImage(path),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.file(
+                                  File(path),
+                                  width: 80,
+                                  height: 80,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 0,
+                              right: 0,
+                              child: GestureDetector(
+                                onTap: () async {
+                                  await FileStorageService.deleteFileIfExists(path); // borrar físico
+                                  setModalState(() => selectedPhotos.remove(path));
+                                },
+                                child: const CircleAvatar(
+                                  radius: 10,
+                                  backgroundColor: Colors.black54,
+                                  child: Icon(Icons.close, size: 14, color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
                     ),
+
                   const SizedBox(height: 16),
+
+                  // Guardar
                   ElevatedButton.icon(
                     onPressed: () {
                       final amount = double.tryParse(
-                              amountController.text.replaceAll(',', '.')) ??
+                            amountController.text.replaceAll(',', '.'),
+                          ) ??
                           0;
-
                       if (amount <= 0) return;
 
                       final updatedPayment = RentPayment(
-                        id: existingPayment?.id ?? UniqueKey().toString(),
+                        id: paymentId, // importante: id estable
                         amount: amount,
                         date: selectedDate,
                         note: noteController.text.trim(),
-                        photoPaths: selectedPhotos,
+                        photoPaths: selectedPhotos, // rutas internas
                       );
 
                       if (onSave != null) {
                         onSave(updatedPayment);
                       } else {
                         setState(() {
+                          // si editas, reemplaza el entry con el mismo id
+                          widget.block.payments.removeWhere((p) => p.id == paymentId);
                           widget.block.payments.add(updatedPayment);
                           widget.property.save();
                         });
@@ -648,6 +679,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                     icon: const Icon(Icons.check),
                     label: Text(loc.payment_saveButton),
                   ),
+
                   const SizedBox(height: 24),
                 ],
               ),
@@ -663,6 +695,11 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
     void Function(MaintenanceEntry)? onSave,
   }) {
     final loc = AppLocalizations.of(context)!;
+
+    // ID del entry: si edito uso el existente; si creo, genero uno
+    final entryId = existingEntry?.id ?? const Uuid().v4();
+    final baseSubdir = 'properties/${widget.property.id}/maintenance/$entryId';
+
     final descriptionController = TextEditingController(
       text: existingEntry?.description ?? '',
     );
@@ -670,7 +707,11 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
       text: existingEntry?.amount.toString() ?? '',
     );
     DateTime selectedDate = existingEntry?.date ?? DateTime.now();
+    // Clonamos las rutas existentes (si edito)
     List<String> selectedPhotos = List.from(existingEntry?.photoPaths ?? []);
+
+    // Para “pisar” en edición: borramos carpeta una sola vez al primer upload
+    bool _clearedOnce = false;
 
     showModalBottomSheet(
       context: context,
@@ -692,9 +733,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    existingEntry != null
-                        ? loc.maintenance_edit
-                        : loc.maintenance_add,
+                    existingEntry != null ? loc.maintenance_edit : loc.maintenance_add,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: Theme.of(context).colorScheme.primary,
                         ),
@@ -707,10 +746,8 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                   const SizedBox(height: 8),
                   TextField(
                     controller: amountController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                        signed: true, decimal: true),
-                    decoration: InputDecoration(
-                        labelText: loc.maintenance_amountLabel),
+                    keyboardType: const TextInputType.numberWithOptions(signed: true, decimal: true),
+                    decoration: InputDecoration(labelText: loc.maintenance_amountLabel),
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -718,10 +755,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                       Text(
                         loc.maintenance_dateLabel,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .primary
-                                  .withOpacity(0.4),
+                              color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
                             ),
                       ),
                       TextButton(
@@ -745,27 +779,47 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        // Galería
                         ElevatedButton.icon(
                           onPressed: () async {
                             final picker = ImagePicker();
                             final images = await picker.pickMultiImage();
                             if (images.isNotEmpty) {
-                              setModalState(() {
-                                selectedPhotos.addAll(images.map((e) => e.path));
-                              });
+                              // Si edito, borrar carpeta una sola vez para pisar
+                              if (existingEntry != null && !_clearedOnce) {
+                                await FileStorageService.deleteAppSubdirRecursively(baseSubdir);
+                                selectedPhotos.clear();
+                                _clearedOnce = true;
+                              }
+                              final savedPaths = await Future.wait(
+                                images.map((x) => FileStorageService.copyXFileToAppStorage(
+                                      x,
+                                      subdir: baseSubdir,
+                                    )),
+                              );
+                              setModalState(() => selectedPhotos.addAll(savedPaths));
                             }
                           },
                           icon: const Icon(Icons.photo_library),
                           label: Text(loc.maintenance_galleryButton),
                         ),
                         const SizedBox(width: 8),
+                        // Cámara
                         ElevatedButton.icon(
                           onPressed: () async {
                             final picker = ImagePicker();
-                            final image =
-                                await picker.pickImage(source: ImageSource.camera);
+                            final image = await picker.pickImage(source: ImageSource.camera);
                             if (image != null) {
-                              setModalState(() => selectedPhotos.add(image.path));
+                              if (existingEntry != null && !_clearedOnce) {
+                                await FileStorageService.deleteAppSubdirRecursively(baseSubdir);
+                                selectedPhotos.clear();
+                                _clearedOnce = true;
+                              }
+                              final saved = await FileStorageService.copyXFileToAppStorage(
+                                image,
+                                subdir: baseSubdir,
+                              );
+                              setModalState(() => selectedPhotos.add(saved));
                             }
                           },
                           icon: const Icon(Icons.camera_alt),
@@ -779,41 +833,42 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: selectedPhotos
-                          .map((path) => Stack(
-                                children: [
-                                  GestureDetector(
-                                    onTap: () => _showFullScreenImage(path),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Image.file(
-                                        File(path),
-                                        width: 80,
-                                        height: 80,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    top: 0,
-                                    right: 0,
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        setModalState(() {
-                                          selectedPhotos.remove(path);
-                                        });
-                                      },
-                                      child: const CircleAvatar(
-                                        radius: 10,
-                                        backgroundColor: Colors.black54,
-                                        child: Icon(Icons.close,
-                                            size: 14, color: Colors.white),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ))
-                          .toList(),
+                      children: selectedPhotos.map((path) {
+                        return Stack(
+                          children: [
+                            GestureDetector(
+                              onTap: () => _showFullScreenImage(path),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.file(
+                                  File(path),
+                                  width: 80,
+                                  height: 80,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 0,
+                              right: 0,
+                              child: GestureDetector(
+                                onTap: () async {
+                                  // Eliminar físicamente y del array
+                                  await FileStorageService.deleteFileIfExists(path);
+                                  setModalState(() {
+                                    selectedPhotos.remove(path);
+                                  });
+                                },
+                                child: const CircleAvatar(
+                                  radius: 10,
+                                  backgroundColor: Colors.black54,
+                                  child: Icon(Icons.close, size: 14, color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
                     ),
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
@@ -823,21 +878,21 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                           ) ??
                           0;
                       final description = descriptionController.text.trim();
-
                       if (description.isEmpty || amount == 0) return;
 
                       final entry = MaintenanceEntry(
-                        id: existingEntry?.id ?? UniqueKey().toString(),
+                        id: entryId, // importante: usamos el id generado/recibido
                         description: description,
                         amount: amount,
                         date: selectedDate,
-                        photoPaths: selectedPhotos,
+                        photoPaths: selectedPhotos, // ya son rutas internas
                       );
 
                       if (onSave != null) {
                         onSave(entry);
                       } else {
                         setState(() {
+                          widget.block.maintenanceEntries.removeWhere((e) => e.id == entry.id);
                           widget.block.maintenanceEntries.add(entry);
                           widget.property.save();
                         });
@@ -888,12 +943,21 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
             child: Text(loc.payment_cancelButton),
           ),
           TextButton(
-            onPressed: () {
-              setState(() {
-                widget.block.payments.removeWhere((p) => p.id == payment.id);
-                widget.property.save(); // Persistir
-              });
-              Navigator.pop(context);
+            onPressed: () async {
+              // 1) Borrar carpeta del pago (fotos, etc.)
+              final propertyId = widget.property.id;
+              final paymentId = payment.id;
+              await FileStorageService.deleteAppSubdirRecursively('properties/$propertyId/payments/$paymentId');
+
+              // 2) Quitar de la UI / Hive
+              if (mounted) {
+                setState(() {
+                  widget.block.payments.removeWhere((p) => p.id == paymentId);
+                  widget.property.save();
+                });
+              }
+
+              if (mounted) Navigator.pop(context);
             },
             child: Text(
               loc.payment_confirmDeleteButton,
@@ -919,12 +983,25 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
             child: Text(loc.maintenance_cancelButton),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
+              // 1) Borra la carpeta con todas las fotos del mantenimiento
+              final propertyId = widget.property.id;
+              final entryId = m.id;
+              await FileStorageService.deleteAppSubdirRecursively('properties/$propertyId/maintenance/$entryId');
+
+              // (Opcional) Fallback: si por alguna razón hubo fotos fuera de esa carpeta
+              // for (final path in m.photoPaths) {
+              //   await FileStorageService.deleteFile(path);
+              // }
+
+              // 2) Actualiza estado y persiste
+              if (!mounted) return;
               setState(() {
-                widget.block.maintenanceEntries.remove(m);
+                widget.block.maintenanceEntries.removeWhere((e) => e.id == entryId);
                 widget.property.save();
               });
-              Navigator.pop(context);
+
+              if (mounted) Navigator.pop(context);
             },
             child: Text(
               loc.maintenance_confirmDeleteButton,

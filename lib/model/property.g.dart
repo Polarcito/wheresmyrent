@@ -25,7 +25,8 @@ class PropertyAdapter extends TypeAdapter<Property> {
       startDate: fields[8] as DateTime,
       tenantName: fields[3] as String,
       tenantEmail: fields[4] as String,
-      tenantPhone: fields[5] as String,
+      tenantPhoneCode: fields[14] as String,
+      tenantPhoneNumber: fields[15] as String,
       endDate: fields[9] as DateTime?,
       isActive: fields[10] as bool,
       contractFilePath: fields[11] as String?,
@@ -37,7 +38,7 @@ class PropertyAdapter extends TypeAdapter<Property> {
   @override
   void write(BinaryWriter writer, Property obj) {
     writer
-      ..writeByte(14)
+      ..writeByte(15)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -48,8 +49,6 @@ class PropertyAdapter extends TypeAdapter<Property> {
       ..write(obj.tenantName)
       ..writeByte(4)
       ..write(obj.tenantEmail)
-      ..writeByte(5)
-      ..write(obj.tenantPhone)
       ..writeByte(6)
       ..write(obj.monthlyRent)
       ..writeByte(7)
@@ -65,7 +64,11 @@ class PropertyAdapter extends TypeAdapter<Property> {
       ..writeByte(12)
       ..write(obj.initialPhotos)
       ..writeByte(13)
-      ..write(obj.monthlyBlocks);
+      ..write(obj.monthlyBlocks)
+      ..writeByte(14)
+      ..write(obj.tenantPhoneCode)
+      ..writeByte(15)
+      ..write(obj.tenantPhoneNumber);
   }
 
   @override

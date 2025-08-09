@@ -292,7 +292,7 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
               const SizedBox(height: 16),
               Text('🏠 Arrendatario: ${p.tenantName}', style: const TextStyle(fontWeight: FontWeight.bold)),
               Text('✉️ Correo: ${p.tenantEmail}'),
-              Text('📞 Teléfono: ${p.tenantPhone}'),
+              Text('📞 Teléfono: ${p.tenantPhoneCode} ${p.tenantPhoneNumber}'),
               const SizedBox(height: 8),
               Text('📍 Dirección: ${p.address}'),
               Text('💵 Arriendo mensual: \$${p.monthlyRent.toStringAsFixed(0)}'),

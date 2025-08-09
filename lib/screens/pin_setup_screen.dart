@@ -61,7 +61,7 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
         title: Text(
           AppLocalizations.of(context)!.login_createPin,
           style: TextStyle(color: Colors.white),
-        )
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -70,23 +70,42 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              Expanded(
+                flex: 3,
+                child: Center(
+                  child: Image.asset(
+                    'assets/logo/logo_text.png',
+                    fit: BoxFit.fitWidth,
+                    width: double.infinity,
+                  ),
+                ),
+              ),
+
               TextField(
                 controller: _pinController,
                 obscureText: true,
                 keyboardType: TextInputType.number,
-                decoration: InputDecoration(labelText: AppLocalizations.of(context)!.login_enterPin),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.login_enterPin,
+                ),
               ),
               const SizedBox(height: 16),
+
               TextField(
                 controller: _confirmPinController,
                 obscureText: true,
                 keyboardType: TextInputType.number,
-                decoration: InputDecoration(labelText: AppLocalizations.of(context)!.login_confirmPin),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.login_confirmPin,
+                ),
               ),
               const SizedBox(height: 16),
+
               if (_errorText != null)
                 Text(_errorText!, style: const TextStyle(color: Colors.red)),
+
               const SizedBox(height: 24),
+
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.secondary,

@@ -371,6 +371,12 @@ abstract class AppLocalizations {
   /// **'Enter a valid number'**
   String get addProperty_invalidNumber;
 
+  /// No description provided for @addProperty_invalidPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid phone number.'**
+  String get addProperty_invalidPhone;
+
   /// No description provided for @addProperty_selectDueDay.
   ///
   /// In en, this message translates to:
@@ -682,6 +688,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Maintenance'**
   String get tab_maintenance;
+
+  /// No description provided for @notification_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpaid rent'**
+  String get notification_title;
+
+  /// No description provided for @notification_body.
+  ///
+  /// In en, this message translates to:
+  /// **'The property \"{property}\" hasn\'t been fully paid yet.'**
+  String notification_body(Object property);
+
+  /// No description provided for @notification_channel_name.
+  ///
+  /// In en, this message translates to:
+  /// **'Rent reminder'**
+  String get notification_channel_name;
+
+  /// No description provided for @notification_channel_description.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifies when a rent is overdue and unpaid'**
+  String get notification_channel_description;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

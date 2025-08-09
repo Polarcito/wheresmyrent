@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui' as ui;
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:wheresmyrent/gen_l10n/app_localizations.dart';
 import 'package:wheresmyrent/model/property.dart';
 import 'package:uuid/uuid.dart';
+import 'package:wheresmyrent/model/services/file_storage_service.dart';
 
 class AddPropertyScreen extends StatefulWidget {
   final Property? existingProperty;
@@ -21,6 +23,7 @@ class AddPropertyScreen extends StatefulWidget {
 class _AddPropertyScreenState extends State<AddPropertyScreen> {
   int currentStep = 0;
   int? _selectedDueDay = 5;
+  String? _propertyId;
 
   final _formKeys = List.generate(3, (_) => GlobalKey<FormState>());
 
@@ -38,11 +41,50 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
 
   final _uuid = const Uuid();
 
+  final List<Map<String, String>> countryCodes = [
+    {'code': '+61',  'name': 'Australia',      'flag': '🇦🇺', 'iso': 'AU'},
+    {'code': '+54',  'name': 'Argentina',      'flag': '🇦🇷', 'iso': 'AR'},
+    {'code': '+56',  'name': 'Chile',          'flag': '🇨🇱', 'iso': 'CL'},
+    {'code': '+86',  'name': 'China',          'flag': '🇨🇳', 'iso': 'CN'},
+    {'code': '+57',  'name': 'Colombia',       'flag': '🇨🇴', 'iso': 'CO'},
+    {'code': '+20',  'name': 'Egipto',         'flag': '🇪🇬', 'iso': 'EG'},
+    {'code': '+34',  'name': 'España',         'flag': '🇪🇸', 'iso': 'ES'},
+    {'code': '+33',  'name': 'Francia',        'flag': '🇫🇷', 'iso': 'FR'},
+    {'code': '+49',  'name': 'Alemania',       'flag': '🇩🇪', 'iso': 'DE'},
+    {'code': '+91',  'name': 'India',          'flag': '🇮🇳', 'iso': 'IN'},
+    {'code': '+62',  'name': 'Indonesia',      'flag': '🇮🇩', 'iso': 'ID'},
+    {'code': '+972', 'name': 'Israel',         'flag': '🇮🇱', 'iso': 'IL'},
+    {'code': '+81',  'name': 'Japón',          'flag': '🇯🇵', 'iso': 'JP'},
+    {'code': '+82',  'name': 'Corea del Sur',  'flag': '🇰🇷', 'iso': 'KR'},
+    {'code': '+60',  'name': 'Malasia',        'flag': '🇲🇾', 'iso': 'MY'},
+    {'code': '+234', 'name': 'Nigeria',        'flag': '🇳🇬', 'iso': 'NG'},
+    {'code': '+64',  'name': 'Nueva Zelanda',  'flag': '🇳🇿', 'iso': 'NZ'},
+    {'code': '+47',  'name': 'Noruega',        'flag': '🇳🇴', 'iso': 'NO'},
+    {'code': '+51',  'name': 'Perú',           'flag': '🇵🇪', 'iso': 'PE'},
+    {'code': '+63',  'name': 'Filipinas',      'flag': '🇵🇭', 'iso': 'PH'},
+    {'code': '+55',  'name': 'Brasil',         'flag': '🇧🇷', 'iso': 'BR'},
+    {'code': '+44',  'name': 'Reino Unido',    'flag': '🇬🇧', 'iso': 'GB'},
+    {'code': '+7',   'name': 'Rusia',          'flag': '🇷🇺', 'iso': 'RU'},
+    {'code': '+358', 'name': 'Finlandia',      'flag': '🇫🇮', 'iso': 'FI'},
+    {'code': '+46',  'name': 'Suecia',         'flag': '🇸🇪', 'iso': 'SE'},
+    {'code': '+41',  'name': 'Suiza',          'flag': '🇨🇭', 'iso': 'CH'},
+    {'code': '+27',  'name': 'Sudáfrica',      'flag': '🇿🇦', 'iso': 'ZA'},
+    {'code': '+66',  'name': 'Tailandia',      'flag': '🇹🇭', 'iso': 'TH'},
+    {'code': '+90',  'name': 'Turquía',        'flag': '🇹🇷', 'iso': 'TR'},
+    {'code': '+1',   'name': 'USA',            'flag': '🇺🇸', 'iso': 'US'},
+  ];
+
+  String _tenantPhoneCode = '+56'; // valor por defecto
+  String _selectedCountryCode = '+56'; // Valor inicial por defecto (Chile)
+
   @override
   void initState() {
     super.initState();
     final p = widget.existingProperty;
+
     if (p != null) {
+      // Modo edición
+      _propertyId = p.id;
       _nameController.text = p.name;
       _addressController.text = p.address;
       _rentController.text = p.monthlyRent.toString();
@@ -50,10 +92,34 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
       _startDate = p.startDate;
       _tenantNameController.text = p.tenantName;
       _tenantEmailController.text = p.tenantEmail;
-      _tenantPhoneController.text = p.tenantPhone;
       _contractFilePath = p.contractFilePath;
       _initialPhotos = List<String>.from(p.initialPhotos);
+
+      if (p.tenantPhoneNumber.isNotEmpty) {
+        _tenantPhoneCode = p.tenantPhoneCode;
+        _tenantPhoneController.text = p.tenantPhoneNumber;
+      }
+    } else {
+      // Modo creación → generar id temporal
+      _propertyId = _uuid.v4();
     }
+
+    if (_tenantPhoneController.text.isEmpty) {
+      _setInitialCountryCode();
+    }
+  }
+
+  void _setInitialCountryCode() {
+    final isoCode = ui.PlatformDispatcher.instance.locale.countryCode?.toUpperCase() ?? 'CL';
+
+    final match = countryCodes.firstWhere(
+      (c) => c['iso'] == isoCode,
+      orElse: () => {'code': '+56'},
+    );
+
+    setState(() {
+      _tenantPhoneCode = match['code']!;
+    });
   }
 
   void _pickStartDate() async {
@@ -73,18 +139,36 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
   void _pickContractFile() async {
     final file = await openFile();
     if (file != null) {
+      final savedPath = await FileStorageService.copyToAppStorage(
+        File(file.path),
+        subdir: 'properties/$_propertyId/contracts',
+        filename: 'contract${FileStorageService.extractExtension(file.path)}',
+      );
+
       setState(() {
-        _contractFilePath = file.path;
+        _contractFilePath = savedPath;
       });
     }
   }
 
   void _pickInitialPhotos() async {
     final picker = ImagePicker();
-    final List<XFile> picked = await picker.pickMultiImage();
-    setState(() {
-      _initialPhotos.addAll(picked.map((e) => e.path));
-    });
+    final picked = await picker.pickMultiImage();
+
+    if (picked.isNotEmpty) {
+      final savedPaths = await Future.wait(picked.map(
+        (xfile) => FileStorageService.copyXFileToAppStorage(
+          xfile,
+          subdir: 'properties/$_propertyId/initial_photos',
+        ),
+      ));
+
+      setState(() {
+        _initialPhotos
+          ..clear() // así "pisas" las existentes si es edición
+          ..addAll(savedPaths);
+      });
+    }
   }
 
   void _nextStep() {
@@ -119,13 +203,14 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
       property.startDate = _startDate!;
       property.tenantName = _tenantNameController.text;
       property.tenantEmail = _tenantEmailController.text;
-      property.tenantPhone = _tenantPhoneController.text;
+      property.tenantPhoneCode = _selectedCountryCode;
+      property.tenantPhoneNumber = _tenantPhoneController.text;
       property.contractFilePath = _contractFilePath;
       property.initialPhotos = _initialPhotos;
       await property.save();
     } else {
       final property = Property(
-        id: _uuid.v4(),
+        id: _propertyId!,
         name: _nameController.text,
         address: _addressController.text,
         monthlyRent: double.tryParse(_rentController.text.replaceAll(',', '.')) ?? 0,
@@ -133,7 +218,9 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
         startDate: _startDate!,
         tenantName: _tenantNameController.text,
         tenantEmail: _tenantEmailController.text,
-        tenantPhone: _tenantPhoneController.text,
+        tenantPhoneCode: _selectedCountryCode,
+        tenantPhoneNumber: _tenantPhoneController.text,
+
         contractFilePath: _contractFilePath,
         initialPhotos: _initialPhotos,
       );
@@ -150,6 +237,7 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
     );
     Navigator.pop(context);
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -285,10 +373,49 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
           },
         ),
         const SizedBox(height: 16),
-        TextFormField(
-          controller: _tenantPhoneController,
-          decoration: InputDecoration(labelText: loc.addProperty_step2_tenantPhone),
-          validator: (value) => value!.isEmpty ? loc.addProperty_required : null,
+        Row(
+          children: [
+            Flexible(
+              flex: 0,
+              child: SizedBox(
+                width: 130,
+                child: DropdownButtonFormField<String>(
+                  value: _selectedCountryCode,
+                  decoration: const InputDecoration(labelText: 'Código'),
+                  onChanged: (newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        _selectedCountryCode = newValue;
+                      });
+                    }
+                  },
+                  items: countryCodes.map((country) {
+                    final display = '${country['flag']} ${country['code']}';
+                    return DropdownMenuItem<String>(
+                      value: country['code'],
+                      child: Text(display, overflow: TextOverflow.ellipsis),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextFormField(
+                controller: _tenantPhoneController,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  labelText: loc.addProperty_step2_tenantPhone,
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) return loc.addProperty_required;
+                  if (value.length < 6) return loc.addProperty_invalidPhone;
+                  return null;
+                },
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              ),
+            ),
+          ],
         ),
       ],
     );

@@ -21,9 +21,6 @@ class Property extends HiveObject {
   @HiveField(4)
   String tenantEmail;
 
-  @HiveField(5)
-  String tenantPhone;
-
   @HiveField(6)
   double monthlyRent;
 
@@ -48,6 +45,12 @@ class Property extends HiveObject {
   @HiveField(13)
   List<MonthlyRentBlock> monthlyBlocks;
 
+  @HiveField(14)
+  String tenantPhoneCode;
+
+  @HiveField(15)
+  String tenantPhoneNumber;
+
   Property({
     required this.id,
     required this.name,
@@ -57,7 +60,8 @@ class Property extends HiveObject {
     required this.startDate,
     required this.tenantName,
     required this.tenantEmail,
-    required this.tenantPhone,
+    required this.tenantPhoneCode,
+    required this.tenantPhoneNumber,
     this.endDate,
     this.isActive = true,
     this.contractFilePath,

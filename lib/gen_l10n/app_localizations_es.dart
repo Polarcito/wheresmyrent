@@ -149,6 +149,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get addProperty_invalidNumber => 'Ingresa un número válido';
 
   @override
+  String get addProperty_invalidPhone => 'Número de teléfono no válido.';
+
+  @override
   String get addProperty_selectDueDay => 'Selecciona un día de vencimiento';
 
   @override
@@ -303,4 +306,18 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get tab_maintenance => 'Mantención';
+
+  @override
+  String get notification_title => 'Arriendo pendiente';
+
+  @override
+  String notification_body(Object property) {
+    return 'La propiedad \"$property\" aún no ha sido pagada completamente.';
+  }
+
+  @override
+  String get notification_channel_name => 'Recordatorio de arriendo';
+
+  @override
+  String get notification_channel_description => 'Notifica cuando un arriendo no ha sido pagado después del vencimiento';
 }
