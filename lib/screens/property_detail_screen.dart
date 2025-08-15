@@ -2,10 +2,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
+import 'package:wheresmyrent/model/generic/currency_helper.dart';
 import 'package:wheresmyrent/model/monthly_rent_block.dart';
 import 'package:wheresmyrent/model/property.dart';
 import 'package:wheresmyrent/screens/add_property_screen.dart';
 import 'package:wheresmyrent/screens/monthly_block_detail_screen.dart';
+import 'package:wheresmyrent/gen_l10n/app_localizations.dart';
 
 class PropertyDetailScreen extends StatefulWidget {
   final Property property;
@@ -27,6 +29,9 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    final localeName = Localizations.localeOf(context).toString();
+
     final p = widget.property;
     final monthlyRent = p.monthlyRent;
 
@@ -41,12 +46,12 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.info_outline),
-            tooltip: 'Ver detalles',
+            tooltip: loc.propertyDetails_tooltip, // "Ver detalles"
             onPressed: _showPropertyDetailsModal,
           ),
           IconButton(
             icon: const Icon(Icons.edit),
-            tooltip: 'Editar propiedad',
+            tooltip: loc.common_edit, // "Editar propiedad"
             onPressed: () async {
               final originalRent = p.monthlyRent;
               await Navigator.push(
@@ -57,8 +62,6 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
               );
               if (mounted) {
                 setState(() {});
-
-                // Compara si el valor cambió
                 if (p.monthlyRent != originalRent) {
                   await _mostrarDialogoActualizarRenta(context, p, originalRent);
                 }
@@ -75,9 +78,9 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildYearSelector(),
+                _buildYearSelector(loc),
                 const SizedBox(height: 8),
-                _buildMonthlyGrid(currentYearBlocks, monthlyRent),
+                _buildMonthlyGrid(currentYearBlocks, monthlyRent, localeName, loc),
               ],
             ),
           ),
@@ -86,13 +89,14 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
     );
   }
 
-  Widget _buildYearSelector() {
+  Widget _buildYearSelector(AppLocalizations loc) {
+    final theme = Theme.of(context);
     return Row(
       children: [
         Text(
-          'Año:',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: Theme.of(context).colorScheme.primary,
+          loc.year_label, // "Año:"
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: theme.colorScheme.primary,
           ),
         ),
         const SizedBox(width: 16),
@@ -100,9 +104,7 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
           value: selectedYear,
           onChanged: (value) {
             if (value != null) {
-              setState(() {
-                selectedYear = value;
-              });
+              setState(() => selectedYear = value);
             }
           },
           items: List.generate(10, (i) {
@@ -112,22 +114,19 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
               child: Text(
                 year.toString(),
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
+                  color: theme.colorScheme.primary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             );
           }),
           style: TextStyle(
-            color: Theme.of(context).colorScheme.primary,
+            color: theme.colorScheme.primary,
             fontSize: 16,
             fontWeight: FontWeight.w500,
           ),
-          icon: Icon(
-            Icons.arrow_drop_down,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          dropdownColor: Theme.of(context).colorScheme.surface,
+          icon: Icon(Icons.arrow_drop_down, color: theme.colorScheme.primary),
+          dropdownColor: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
         ),
       ],
@@ -157,7 +156,12 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
     }
   }
 
-  Widget _buildMonthlyGrid(List blocks, double monthlyRent) {
+  Widget _buildMonthlyGrid(
+    List blocks,
+    double monthlyRent,
+    String localeName,
+    AppLocalizations loc,
+  ) {
     _ensureBlocksForYear(selectedYear);
 
     final sortedBlocks = widget.property.monthlyBlocks
@@ -178,7 +182,9 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
       itemBuilder: (context, index) {
         final block = sortedBlocks[index];
         final total = block.payments.fold(0.0, (sum, p) => sum + p.amount);
-        final monthName = DateFormat.MMM('es').format(DateTime(0, block.month));
+
+        // Mes en el idioma actual
+        final monthName = DateFormat.MMM(localeName).format(DateTime(0, block.month));
 
         final DateTime today = DateTime.now();
         final DateTime dueDate = DateTime(block.year, block.month, widget.property.dueDay);
@@ -195,7 +201,7 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
         Color color;
 
         if (isBeforeContract) {
-          icon = Icons.history; // antes del inicio
+          icon = Icons.history;
           color = Colors.grey;
         } else if (isPaid) {
           icon = Icons.check_circle;
@@ -231,41 +237,41 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             color: isBeforeContract ? Colors.grey.shade200 : null,
             child: Stack(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      monthName.toUpperCase(),
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: isBeforeContract ? Colors.grey : null,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        monthName.toUpperCase(),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isBeforeContract ? Colors.grey : null,
+                        ),
                       ),
-                    ),
-                    Icon(icon, color: color, size: 30),
-                    Text(
-                      '${(total / block.effectiveRent * 100).clamp(0, 100).toStringAsFixed(0)}%',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    LinearProgressIndicator(
-                      value: percentPaid,
-                      minHeight: 6,
-                      backgroundColor: Colors.grey.shade300,
-                      valueColor: AlwaysStoppedAnimation<Color>(color),
-                    ),
-                  ],
+                      Icon(icon, color: color, size: 30),
+                      Text(
+                        '${(total / block.effectiveRent * 100).clamp(0, 100).toStringAsFixed(0)}%',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      LinearProgressIndicator(
+                        value: percentPaid,
+                        minHeight: 6,
+                        backgroundColor: Colors.grey.shade300,
+                        valueColor: AlwaysStoppedAnimation<Color>(color),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              if (block.maintenanceEntries.isNotEmpty)
-                const Positioned(
-                  top: 4,
-                  right: 4,
-                  child: Icon(Icons.build, size: 16, color: Colors.grey),
-                ),
-            ],
-          ),
+                if (block.maintenanceEntries.isNotEmpty)
+                  const Positioned(
+                    top: 4,
+                    right: 4,
+                    child: Icon(Icons.build, size: 16, color: Colors.grey),
+                  ),
+              ],
+            ),
           ),
         );
       },
@@ -273,8 +279,11 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
   }
 
   void _showPropertyDetailsModal() {
+    final loc = AppLocalizations.of(context)!;
+    final localeName = Localizations.localeOf(context).toString();
     final p = widget.property;
-    final formatter = DateFormat.yMMMd('es');
+
+    final formatter = DateFormat.yMMMd(localeName);
     final hasContract = p.contractFilePath != null && File(p.contractFilePath!).existsSync();
     final hasPhotos = p.initialPhotos.isNotEmpty;
 
@@ -288,33 +297,34 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Información de la propiedad', style: Theme.of(context).textTheme.titleLarge),
+              Text(loc.propertyDetails_title, style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 16),
-              Text('🏠 Arrendatario: ${p.tenantName}', style: const TextStyle(fontWeight: FontWeight.bold)),
-              Text('✉️ Correo: ${p.tenantEmail}'),
-              Text('📞 Teléfono: ${p.tenantPhoneCode} ${p.tenantPhoneNumber}'),
+              Text('🏠 ${loc.propertyDetails_tenantName(p.tenantName)}',
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text('✉️ ${loc.propertyDetails_tenantEmail(p.tenantEmail)}'),
+              Text('📞 ${loc.propertyDetails_tenantPhone("${p.tenantPhoneCode} ${p.tenantPhoneNumber}")}'),
               const SizedBox(height: 8),
-              Text('📍 Dirección: ${p.address}'),
-              Text('💵 Arriendo mensual: \$${p.monthlyRent.toStringAsFixed(0)}'),
-              Text('📆 Día de vencimiento: ${p.dueDay}'),
-              Text('⏳ Inicio contrato: ${formatter.format(p.startDate)}'),
+              Text('📍 ${loc.propertyDetails_address(p.address)}'),
+              Text('💵 ${loc.propertyDetails_monthlyRent(formatAmountWithCurrencySync(context, p.monthlyRent))}'),
+              Text('📆 ${loc.propertyDetails_dueDay(p.dueDay)}'),
+              Text('⏳ ${loc.propertyDetails_startDate(formatter.format(p.startDate))}'),
               if (p.endDate != null)
-                Text('🏁 Fin contrato: ${formatter.format(p.endDate!)}'),
+                Text('🏁 ${loc.propertyDetails_endDate(formatter.format(p.endDate!))}'),
               const SizedBox(height: 12),
               Row(
                 children: [
                   if (hasContract)
                     TextButton.icon(
                       icon: const Icon(Icons.picture_as_pdf),
-                      label: const Text('Ver contrato'),
+                      label: Text(loc.propertyDetails_viewContract),
                       onPressed: () => OpenFile.open(p.contractFilePath!),
                     ),
                   if (hasPhotos)
                     TextButton.icon(
                       icon: const Icon(Icons.photo_library),
-                      label: const Text('Ver fotos'),
+                      label: Text(loc.propertyDetails_viewPhotos),
                       onPressed: () {
-                        Navigator.of(context).pop(); // cerrar modal antes de abrir otro
+                        Navigator.of(context).pop();
                         showDialog(
                           context: context,
                           builder: (_) => Dialog(
@@ -346,23 +356,28 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
     );
   }
 
-  Future<void> _mostrarDialogoActualizarRenta(BuildContext context, Property propiedad, double valorAnterior) async {
+  Future<void> _mostrarDialogoActualizarRenta(
+      BuildContext context, Property propiedad, double valorAnterior) async {
+    final loc = AppLocalizations.of(context)!;
+
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("¿Aplicar nuevo arriendo?"),
+        title: Text(loc.updateRent_title), // "¿Aplicar nuevo arriendo?"
         content: Text(
-          "Has cambiado el valor del arriendo de \$${valorAnterior.toStringAsFixed(0)} a \$${propiedad.monthlyRent.toStringAsFixed(0)}.\n\n"
-          "¿Deseas aplicar este nuevo valor a los meses futuros que aún no están en fecha de pago?",
+          loc.updateRent_body(
+            formatAmountWithCurrencySync(context, valorAnterior),
+            formatAmountWithCurrencySync(context, propiedad.monthlyRent),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text("No"),
+            child: Text(loc.common_no),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text("Sí"),
+            child: Text(loc.common_yes),
           ),
         ],
       ),
@@ -380,7 +395,7 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
       await propiedad.save();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Nuevo arriendo aplicado a los meses futuros.")),
+          SnackBar(content: Text(loc.updateRent_appliedSnack)), // "Nuevo arriendo aplicado..."
         );
       }
       setState(() {});

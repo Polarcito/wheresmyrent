@@ -320,4 +320,103 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get notification_channel_description => 'Notifica cuando un arriendo no ha sido pagado después del vencimiento';
+
+  @override
+  String get common_close => 'Cerrar';
+
+  @override
+  String get settings_showCurrency_title => 'Mostrar moneda';
+
+  @override
+  String get settings_showCurrency_subtitle => 'Mostrar montos con símbolo y formato de moneda';
+
+  @override
+  String get settings_currencyType_label => 'Tipo de moneda';
+
+  @override
+  String get common_ok => 'Aceptar';
+
+  @override
+  String get settings_currencyType_custom_label => 'Código de moneda personalizado';
+
+  @override
+  String get settings_currencyType_custom_hint => 'Ingresa un código de 3 letras (ej: USD)';
+
+  @override
+  String get settings_currencyType_error_invalid => 'Usa exactamente 3 letras (A–Z)';
+
+  @override
+  String get propertyDetails_tooltip => 'Ver detalles';
+
+  @override
+  String get common_edit => 'Editar propiedad';
+
+  @override
+  String get year_label => 'Año:';
+
+  @override
+  String get propertyDetails_title => 'Información de la propiedad';
+
+  @override
+  String propertyDetails_tenantName(Object name) {
+    return 'Arrendatario: $name';
+  }
+
+  @override
+  String propertyDetails_tenantEmail(Object email) {
+    return 'Correo: $email';
+  }
+
+  @override
+  String propertyDetails_tenantPhone(Object phone) {
+    return 'Teléfono: $phone';
+  }
+
+  @override
+  String propertyDetails_address(Object address) {
+    return 'Dirección: $address';
+  }
+
+  @override
+  String propertyDetails_monthlyRent(Object amount) {
+    return 'Arriendo mensual: $amount';
+  }
+
+  @override
+  String propertyDetails_dueDay(Object day) {
+    return 'Día de vencimiento: $day';
+  }
+
+  @override
+  String propertyDetails_startDate(Object date) {
+    return 'Inicio contrato: $date';
+  }
+
+  @override
+  String propertyDetails_endDate(Object date) {
+    return 'Fin contrato: $date';
+  }
+
+  @override
+  String get propertyDetails_viewContract => 'Ver contrato';
+
+  @override
+  String get propertyDetails_viewPhotos => 'Ver fotos';
+
+  @override
+  String get updateRent_title => '¿Aplicar nuevo arriendo?';
+
+  @override
+  String updateRent_body(Object newRent, Object oldRent) {
+    return 'Has cambiado el valor del arriendo de $oldRent a $newRent.\n\n¿Deseas aplicar este nuevo valor a los meses futuros que aún no están en fecha de pago?';
+  }
+
+  @override
+  String get updateRent_appliedSnack => 'Nuevo arriendo aplicado a los meses futuros.';
+
+  @override
+  String get common_yes => 'Sí';
+
+  @override
+  String get common_no => 'No';
 }

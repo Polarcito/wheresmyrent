@@ -124,6 +124,39 @@
   "notification_title": "Arriendo pendiente",
   "notification_body": "La propiedad \"{property}\" aún no ha sido pagada completamente.",
   "notification_channel_name": "Recordatorio de arriendo",
-  "notification_channel_description": "Notifica cuando un arriendo no ha sido pagado después del vencimiento"
+  "notification_channel_description": "Notifica cuando un arriendo no ha sido pagado después del vencimiento",
 
+  "common_close": "Cerrar",
+
+  "settings_showCurrency_title": "Mostrar moneda",
+  "settings_showCurrency_subtitle": "Mostrar montos con símbolo y formato de moneda",
+  "settings_currencyType_label": "Tipo de moneda",
+
+  "common_ok": "Aceptar",
+  "common_cancel": "Cancelar",
+
+  "settings_currencyType_custom_label": "Código de moneda personalizado",
+  "settings_currencyType_custom_hint": "Ingresa un código de 3 letras (ej: USD)",
+  "settings_currencyType_error_invalid": "Usa exactamente 3 letras (A–Z)",
+
+  "propertyDetails_tooltip": "Ver detalles",
+  "common_edit": "Editar propiedad",
+  "year_label": "Año:",
+  "propertyDetails_title": "Información de la propiedad",
+  "propertyDetails_tenantName": "Arrendatario: {name}",
+  "propertyDetails_tenantEmail": "Correo: {email}",
+  "propertyDetails_tenantPhone": "Teléfono: {phone}",
+  "propertyDetails_address": "Dirección: {address}",
+  "propertyDetails_monthlyRent": "Arriendo mensual: {amount}",
+  "propertyDetails_dueDay": "Día de vencimiento: {day}",
+  "propertyDetails_startDate": "Inicio contrato: {date}",
+  "propertyDetails_endDate": "Fin contrato: {date}",
+  "propertyDetails_viewContract": "Ver contrato",
+  "propertyDetails_viewPhotos": "Ver fotos",
+
+  "updateRent_title": "¿Aplicar nuevo arriendo?",
+  "updateRent_body": "Has cambiado el valor del arriendo de {oldRent} a {newRent}.\n\n¿Deseas aplicar este nuevo valor a los meses futuros que aún no están en fecha de pago?",
+  "updateRent_appliedSnack": "Nuevo arriendo aplicado a los meses futuros.",
+  "common_yes": "Sí",
+  "common_no": "No"
 }

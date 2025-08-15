@@ -124,6 +124,40 @@
   "notification_title": "Unpaid rent",
   "notification_body": "The property \"{property}\" hasn't been fully paid yet.",
   "notification_channel_name": "Rent reminder",
-  "notification_channel_description": "Notifies when a rent is overdue and unpaid"
+  "notification_channel_description": "Notifies when a rent is overdue and unpaid",
+
+  "common_close": "Close",
+
+  "settings_showCurrency_title": "Show currency",
+  "settings_showCurrency_subtitle": "Display amounts with a currency symbol and format",
+  "settings_currencyType_label": "Currency type",
+
+  "common_ok": "OK",
+  "common_cancel": "Cancel",
+
+  "settings_currencyType_custom_label": "Custom currency code",
+  "settings_currencyType_custom_hint": "Enter a 3-letter code (e.g., USD)",
+  "settings_currencyType_error_invalid": "Use exactly 3 letters (A–Z)",
+
+  "propertyDetails_tooltip": "View details",
+  "common_edit": "Edit property",
+  "year_label": "Year:",
+  "propertyDetails_title": "Property information",
+  "propertyDetails_tenantName": "Tenant: {name}",
+  "propertyDetails_tenantEmail": "Email: {email}",
+  "propertyDetails_tenantPhone": "Phone: {phone}",
+  "propertyDetails_address": "Address: {address}",
+  "propertyDetails_monthlyRent": "Monthly rent: {amount}",
+  "propertyDetails_dueDay": "Due day: {day}",
+  "propertyDetails_startDate": "Contract start: {date}",
+  "propertyDetails_endDate": "Contract end: {date}",
+  "propertyDetails_viewContract": "Contract",
+  "propertyDetails_viewPhotos": "Photos",
+
+  "updateRent_title": "Apply new rent?",
+  "updateRent_body": "You changed the rent from {oldRent} to {newRent}.\n\nDo you want to apply this new value to future months that are not due yet?",
+  "updateRent_appliedSnack": "New rent applied to future months.",
+  "common_yes": "Yes",
+  "common_no": "No"
 
 }

@@ -320,4 +320,103 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notification_channel_description => 'Notifies when a rent is overdue and unpaid';
+
+  @override
+  String get common_close => 'Close';
+
+  @override
+  String get settings_showCurrency_title => 'Show currency';
+
+  @override
+  String get settings_showCurrency_subtitle => 'Display amounts with a currency symbol and format';
+
+  @override
+  String get settings_currencyType_label => 'Currency type';
+
+  @override
+  String get common_ok => 'OK';
+
+  @override
+  String get settings_currencyType_custom_label => 'Custom currency code';
+
+  @override
+  String get settings_currencyType_custom_hint => 'Enter a 3-letter code (e.g., USD)';
+
+  @override
+  String get settings_currencyType_error_invalid => 'Use exactly 3 letters (A–Z)';
+
+  @override
+  String get propertyDetails_tooltip => 'View details';
+
+  @override
+  String get common_edit => 'Edit property';
+
+  @override
+  String get year_label => 'Year:';
+
+  @override
+  String get propertyDetails_title => 'Property information';
+
+  @override
+  String propertyDetails_tenantName(Object name) {
+    return 'Tenant: $name';
+  }
+
+  @override
+  String propertyDetails_tenantEmail(Object email) {
+    return 'Email: $email';
+  }
+
+  @override
+  String propertyDetails_tenantPhone(Object phone) {
+    return 'Phone: $phone';
+  }
+
+  @override
+  String propertyDetails_address(Object address) {
+    return 'Address: $address';
+  }
+
+  @override
+  String propertyDetails_monthlyRent(Object amount) {
+    return 'Monthly rent: $amount';
+  }
+
+  @override
+  String propertyDetails_dueDay(Object day) {
+    return 'Due day: $day';
+  }
+
+  @override
+  String propertyDetails_startDate(Object date) {
+    return 'Contract start: $date';
+  }
+
+  @override
+  String propertyDetails_endDate(Object date) {
+    return 'Contract end: $date';
+  }
+
+  @override
+  String get propertyDetails_viewContract => 'Contract';
+
+  @override
+  String get propertyDetails_viewPhotos => 'Photos';
+
+  @override
+  String get updateRent_title => 'Apply new rent?';
+
+  @override
+  String updateRent_body(Object newRent, Object oldRent) {
+    return 'You changed the rent from $oldRent to $newRent.\n\nDo you want to apply this new value to future months that are not due yet?';
+  }
+
+  @override
+  String get updateRent_appliedSnack => 'New rent applied to future months.';
+
+  @override
+  String get common_yes => 'Yes';
+
+  @override
+  String get common_no => 'No';
 }

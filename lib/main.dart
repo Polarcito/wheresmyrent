@@ -11,6 +11,7 @@ import 'package:wheresmyrent/model/monthly_rent_block.dart';
 import 'package:wheresmyrent/model/property.dart';
 import 'package:wheresmyrent/model/rent_payment.dart';
 import 'package:wheresmyrent/model/services/notification_service.dart';
+import 'package:wheresmyrent/model/services/settings_service.dart';
 import 'package:wheresmyrent/model/services/translation_service.dart';
 import 'package:wheresmyrent/screens/pin_login_screen.dart';
 import 'package:wheresmyrent/screens/pin_setup_screen.dart';
@@ -20,6 +21,8 @@ late final ThemeNotifier themeNotifier;
 late final LocaleNotifier localeNotifier;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await SettingsService.load();
 
   // Inicializa servicios persistentes primero
   await Hive.initFlutter();
@@ -102,7 +105,7 @@ class _MyAppState extends State<MyApp> {
               ],
               theme: AppTheme.lightTheme,
               darkTheme: AppTheme.darkTheme,
-              themeMode: ThemeMode.light, // Puedes volver a activar esto
+              themeMode: ThemeMode.light,
               home: FutureBuilder<bool>(
                 future: AuthService().isPinSaved(),
                 builder: (context, snapshot) {

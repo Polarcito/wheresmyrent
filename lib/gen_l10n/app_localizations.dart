@@ -712,6 +712,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Notifies when a rent is overdue and unpaid'**
   String get notification_channel_description;
+
+  /// No description provided for @common_close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get common_close;
+
+  /// No description provided for @settings_showCurrency_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Show currency'**
+  String get settings_showCurrency_title;
+
+  /// No description provided for @settings_showCurrency_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Display amounts with a currency symbol and format'**
+  String get settings_showCurrency_subtitle;
+
+  /// No description provided for @settings_currencyType_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency type'**
+  String get settings_currencyType_label;
+
+  /// No description provided for @common_ok.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get common_ok;
+
+  /// No description provided for @settings_currencyType_custom_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom currency code'**
+  String get settings_currencyType_custom_label;
+
+  /// No description provided for @settings_currencyType_custom_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a 3-letter code (e.g., USD)'**
+  String get settings_currencyType_custom_hint;
+
+  /// No description provided for @settings_currencyType_error_invalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Use exactly 3 letters (A–Z)'**
+  String get settings_currencyType_error_invalid;
+
+  /// No description provided for @propertyDetails_tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'View details'**
+  String get propertyDetails_tooltip;
+
+  /// No description provided for @common_edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit property'**
+  String get common_edit;
+
+  /// No description provided for @year_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Year:'**
+  String get year_label;
+
+  /// No description provided for @propertyDetails_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Property information'**
+  String get propertyDetails_title;
+
+  /// No description provided for @propertyDetails_tenantName.
+  ///
+  /// In en, this message translates to:
+  /// **'Tenant: {name}'**
+  String propertyDetails_tenantName(Object name);
+
+  /// No description provided for @propertyDetails_tenantEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email: {email}'**
+  String propertyDetails_tenantEmail(Object email);
+
+  /// No description provided for @propertyDetails_tenantPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone: {phone}'**
+  String propertyDetails_tenantPhone(Object phone);
+
+  /// No description provided for @propertyDetails_address.
+  ///
+  /// In en, this message translates to:
+  /// **'Address: {address}'**
+  String propertyDetails_address(Object address);
+
+  /// No description provided for @propertyDetails_monthlyRent.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly rent: {amount}'**
+  String propertyDetails_monthlyRent(Object amount);
+
+  /// No description provided for @propertyDetails_dueDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Due day: {day}'**
+  String propertyDetails_dueDay(Object day);
+
+  /// No description provided for @propertyDetails_startDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract start: {date}'**
+  String propertyDetails_startDate(Object date);
+
+  /// No description provided for @propertyDetails_endDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract end: {date}'**
+  String propertyDetails_endDate(Object date);
+
+  /// No description provided for @propertyDetails_viewContract.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract'**
+  String get propertyDetails_viewContract;
+
+  /// No description provided for @propertyDetails_viewPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get propertyDetails_viewPhotos;
+
+  /// No description provided for @updateRent_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply new rent?'**
+  String get updateRent_title;
+
+  /// No description provided for @updateRent_body.
+  ///
+  /// In en, this message translates to:
+  /// **'You changed the rent from {oldRent} to {newRent}.\n\nDo you want to apply this new value to future months that are not due yet?'**
+  String updateRent_body(Object newRent, Object oldRent);
+
+  /// No description provided for @updateRent_appliedSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'New rent applied to future months.'**
+  String get updateRent_appliedSnack;
+
+  /// No description provided for @common_yes.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes'**
+  String get common_yes;
+
+  /// No description provided for @common_no.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get common_no;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

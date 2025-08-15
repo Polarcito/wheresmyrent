@@ -1,12 +1,14 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:pie_chart/pie_chart.dart';
 import 'package:uuid/uuid.dart';
 import 'package:wheresmyrent/gen_l10n/app_localizations.dart';
 import 'package:wheresmyrent/model/generic/app_theme.dart';
+import 'package:wheresmyrent/model/generic/currency_helper.dart';
 import 'package:wheresmyrent/model/maintenance_entry.dart';
 import 'package:wheresmyrent/model/property.dart';
 import 'package:wheresmyrent/model/monthly_rent_block.dart';
@@ -112,31 +114,31 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
           const SizedBox(height: 24),
           _buildResumenEffectiveRentRow(
             AppLocalizations.of(context)!.summary_expectedRent,
-            '\$${montoEsperado.toStringAsFixed(0)}',
+            formatAmountWithCurrencySync(context, montoEsperado),
             _showEditRentDialog,
           ),
           _buildResumenRow(
             AppLocalizations.of(context)!.summary_totalPaid,
-            '\$${totalPagado.toStringAsFixed(0)}',
+            formatAmountWithCurrencySync(context, totalPagado),
           ),
           _buildResumenRow(
             AppLocalizations.of(context)!.summary_amountDue,
-            '\$${faltaPorPagar.toStringAsFixed(0)}',
+            formatAmountWithCurrencySync(context, faltaPorPagar),
             color: Colors.red,
           ),
           _buildResumenRow(
             AppLocalizations.of(context)!.summary_overpayment,
-            '\$${excedente.toStringAsFixed(0)}',
+            formatAmountWithCurrencySync(context, excedente),
             color: Colors.green,
           ),
           _buildResumenRow(
             AppLocalizations.of(context)!.summary_maintenanceCosts,
-            '\$${totalMantencion.toStringAsFixed(0)}',
+            formatAmountWithCurrencySync(context, totalMantencion),
             color: Colors.orange,
           ),
           _buildResumenRow(
             AppLocalizations.of(context)!.summary_finalBalance,
-            '\$${balanceFinal.toStringAsFixed(0)}',
+            formatAmountWithCurrencySync(context, balanceFinal),
             color: balanceFinal >= 0 ? Colors.green : Colors.red,
           ),
           const SizedBox(height: 24),
@@ -170,8 +172,8 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary,),),
-        Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary,),),
+        Text(label, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary),),
+        Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: color ?? Theme.of(context).colorScheme.primary),),
       ],
     );
   }
@@ -208,6 +210,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
     final payments = widget.block.payments;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final localeName = Localizations.localeOf(context).toString();
 
     return Stack(
       children: [
@@ -253,33 +256,32 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                         CircleAvatar(
                           radius: 24,
                           backgroundColor: Colors.green.withValues(alpha: 0.1),
-                          child: Icon(
-                            Icons.attach_money,
-                            color: Colors.green.shade600,
-                          ),
+                          child: Icon(Icons.attach_money, color: Colors.green.shade600),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // Monto formateado con helper (currency a la izquierda)
                               Text(
-                                '\$${p.amount.toStringAsFixed(0)}',
+                                formatAmountWithCurrencySync(context, p.amount),
                                 style: theme.textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.green.shade600,
                                 ),
                               ),
                               const SizedBox(height: 4),
+                              // Fecha con locale actual
                               Text(
-                                DateFormat.yMMMd('es').format(p.date),
+                                DateFormat.yMMMd(localeName).format(p.date),
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: colorScheme.onSurface.withValues(alpha: 0.8),
                                 ),
                               ),
-                              if (p.note != null)
+                              if ((p.note ?? '').trim().isNotEmpty)
                                 Text(
-                                  p.note!,
+                                  p.note!.trim(),
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: colorScheme.onSurface.withValues(alpha: 0.6),
                                   ),
@@ -337,6 +339,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
     final entries = widget.block.maintenanceEntries;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final localeName = Localizations.localeOf(context).toString();
 
     return Stack(
       children: [
@@ -385,18 +388,16 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                         CircleAvatar(
                           radius: 24,
                           backgroundColor: avatarBg,
-                          child: Icon(
-                            Icons.build_circle,
-                            color: amountColor,
-                          ),
+                          child: Icon(Icons.build_circle, color: amountColor),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // Monto formateado con helper (currency a la izquierda)
                               Text(
-                                '\$${m.amount.toStringAsFixed(0)}',
+                                formatAmountWithCurrencySync(context, m.amount),
                                 style: theme.textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: amountColor,
@@ -410,7 +411,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                                 ),
                               ),
                               Text(
-                                DateFormat.yMMMd('es').format(m.date),
+                                DateFormat.yMMMd(localeName).format(m.date),
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: colorScheme.onSurface.withValues(alpha: 0.6),
                                 ),
@@ -511,9 +512,17 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                   TextField(
                     controller: amountController,
                     keyboardType: const TextInputType.numberWithOptions(
-                      signed: false, decimal: true,
+                      signed: false,
+                      decimal: true,
                     ),
-                    decoration: InputDecoration(labelText: loc.payment_amountLabel),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                        RegExp(r'^\d*\.?\d*'), // permite números con un punto decimal
+                      ),
+                    ],
+                    decoration: InputDecoration(
+                      labelText: loc.payment_amountLabel,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   TextField(
@@ -704,7 +713,7 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
       text: existingEntry?.description ?? '',
     );
     final amountController = TextEditingController(
-      text: existingEntry?.amount.toString() ?? '',
+      text: existingEntry?.amount.toString() ?? '-',
     );
     DateTime selectedDate = existingEntry?.date ?? DateTime.now();
     // Clonamos las rutas existentes (si edito)
@@ -746,8 +755,18 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
                   const SizedBox(height: 8),
                   TextField(
                     controller: amountController,
-                    keyboardType: const TextInputType.numberWithOptions(signed: true, decimal: true),
-                    decoration: InputDecoration(labelText: loc.maintenance_amountLabel),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      signed: true, // permite negativos
+                      decimal: false, // si quieres también decimales pon true
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                        RegExp(r'^-?\d*'), // permite un "-" solo al inicio
+                      ),
+                    ],
+                    decoration: InputDecoration(
+                      labelText: loc.editRentDialog_label,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -1128,13 +1147,15 @@ class _MonthlyBlockDetailScreenState extends State<MonthlyBlockDetailScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(loc.editRentDialog_title),
+        title: Text(loc.editRentDialog_title, style: TextStyle(color: AppColors.primary),),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly, // Solo dígitos (0-9)
+          ],
           decoration: InputDecoration(
             labelText: loc.editRentDialog_label,
-            prefixText: '\$',
           ),
         ),
         actions: [
